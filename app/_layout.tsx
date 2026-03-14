@@ -21,6 +21,10 @@ export default function RootLayout() {
           options={{ presentation: 'modal', title: 'Add Subscription' }}
         />
         <Stack.Screen name="subscription/detail" options={{ title: 'Subscription Detail' }} />
+        <Stack.Screen
+          name="subscription/edit"
+          options={{ presentation: 'modal', title: 'Edit Subscription' }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

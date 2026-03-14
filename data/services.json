@@ -1,0 +1,702 @@
+[
+  {
+    "id": 1,
+    "key": "netflix",
+    "name": "Netflix",
+    "category": "Streaming",
+    "logo": "netflix"
+  },
+  {
+    "id": 2,
+    "key": "disneyplus",
+    "name": "Disney+",
+    "category": "Streaming",
+    "logo": "disneyplus"
+  },
+  {
+    "id": 3,
+    "key": "amazon_prime_video",
+    "name": "Amazon Prime Video",
+    "category": "Streaming",
+    "logo": "amazonprimevideo"
+  },
+  {
+    "id": 4,
+    "key": "hbo_max",
+    "name": "HBO Max",
+    "category": "Streaming",
+    "logo": "hbomax"
+  },
+  {
+    "id": 5,
+    "key": "hulu",
+    "name": "Hulu",
+    "category": "Streaming",
+    "logo": "hulu"
+  },
+  {
+    "id": 6,
+    "key": "apple_tvplus",
+    "name": "Apple TV+",
+    "category": "Streaming",
+    "logo": "appletvplus"
+  },
+  {
+    "id": 7,
+    "key": "youtube_premium",
+    "name": "YouTube Premium",
+    "category": "Streaming",
+    "logo": "youtubepremium"
+  },
+  {
+    "id": 8,
+    "key": "spotify",
+    "name": "Spotify",
+    "category": "Music",
+    "logo": "spotify"
+  },
+  {
+    "id": 9,
+    "key": "apple_music",
+    "name": "Apple Music",
+    "category": "Music",
+    "logo": "applemusic"
+  },
+  {
+    "id": 10,
+    "key": "youtube_music",
+    "name": "YouTube Music",
+    "category": "Music",
+    "logo": "youtubemusic"
+  },
+  {
+    "id": 11,
+    "key": "tidal",
+    "name": "Tidal",
+    "category": "Music",
+    "logo": "tidal"
+  },
+  {
+    "id": 12,
+    "key": "amazon_music",
+    "name": "Amazon Music",
+    "category": "Music",
+    "logo": "amazonmusic"
+  },
+  {
+    "id": 13,
+    "key": "adobe_creative_cloud",
+    "name": "Adobe Creative Cloud",
+    "category": "Software",
+    "logo": "adobe"
+  },
+  {
+    "id": 14,
+    "key": "figma",
+    "name": "Figma",
+    "category": "Software",
+    "logo": "figma"
+  },
+  {
+    "id": 15,
+    "key": "canva",
+    "name": "Canva",
+    "category": "Software",
+    "logo": "canva"
+  },
+  {
+    "id": 16,
+    "key": "notion",
+    "name": "Notion",
+    "category": "Productivity",
+    "logo": "notion"
+  },
+  {
+    "id": 17,
+    "key": "evernote",
+    "name": "Evernote",
+    "category": "Productivity",
+    "logo": "evernote"
+  },
+  {
+    "id": 18,
+    "key": "todoist",
+    "name": "Todoist",
+    "category": "Productivity",
+    "logo": "todoist"
+  },
+  {
+    "id": 19,
+    "key": "microsoft_365",
+    "name": "Microsoft 365",
+    "category": "Software",
+    "logo": "microsoft"
+  },
+  {
+    "id": 20,
+    "key": "google_one",
+    "name": "Google One",
+    "category": "Cloud Storage",
+    "logo": "google"
+  },
+  {
+    "id": 21,
+    "key": "dropbox",
+    "name": "Dropbox",
+    "category": "Cloud Storage",
+    "logo": "dropbox"
+  },
+  {
+    "id": 22,
+    "key": "icloudplus",
+    "name": "iCloud+",
+    "category": "Cloud Storage",
+    "logo": "icloud"
+  },
+  {
+    "id": 23,
+    "key": "pcloud",
+    "name": "pCloud",
+    "category": "Cloud Storage",
+    "logo": "pcloud"
+  },
+  {
+    "id": 24,
+    "key": "mega",
+    "name": "Mega",
+    "category": "Cloud Storage",
+    "logo": "mega"
+  },
+  {
+    "id": 25,
+    "key": "chatgpt_plus",
+    "name": "ChatGPT Plus",
+    "category": "AI Tools",
+    "logo": "openai"
+  },
+  {
+    "id": 26,
+    "key": "claude_pro",
+    "name": "Claude Pro",
+    "category": "AI Tools",
+    "logo": "anthropic"
+  },
+  {
+    "id": 27,
+    "key": "midjourney",
+    "name": "Midjourney",
+    "category": "AI Tools",
+    "logo": "midjourney"
+  },
+  {
+    "id": 28,
+    "key": "perplexity_pro",
+    "name": "Perplexity Pro",
+    "category": "AI Tools",
+    "logo": "perplexity"
+  },
+  {
+    "id": 29,
+    "key": "runway",
+    "name": "Runway",
+    "category": "AI Tools",
+    "logo": "runway"
+  },
+  {
+    "id": 30,
+    "key": "github_copilot",
+    "name": "GitHub Copilot",
+    "category": "AI Tools",
+    "logo": "github"
+  },
+  {
+    "id": 31,
+    "key": "xbox_game_pass",
+    "name": "Xbox Game Pass",
+    "category": "Gaming",
+    "logo": "xbox"
+  },
+  {
+    "id": 32,
+    "key": "playstation_plus",
+    "name": "PlayStation Plus",
+    "category": "Gaming",
+    "logo": "playstation"
+  },
+  {
+    "id": 33,
+    "key": "nintendo_switch_online",
+    "name": "Nintendo Switch Online",
+    "category": "Gaming",
+    "logo": "nintendo"
+  },
+  {
+    "id": 34,
+    "key": "ea_play",
+    "name": "EA Play",
+    "category": "Gaming",
+    "logo": "ea"
+  },
+  {
+    "id": 35,
+    "key": "ubisoftplus",
+    "name": "Ubisoft+",
+    "category": "Gaming",
+    "logo": "ubisoft"
+  },
+  {
+    "id": 36,
+    "key": "twitch_turbo",
+    "name": "Twitch Turbo",
+    "category": "Gaming",
+    "logo": "twitch"
+  },
+  {
+    "id": 37,
+    "key": "kick_subscription",
+    "name": "Kick Subscription",
+    "category": "Gaming",
+    "logo": "kick"
+  },
+  {
+    "id": 38,
+    "key": "amazon_prime",
+    "name": "Amazon Prime",
+    "category": "Streaming",
+    "logo": "amazon"
+  },
+  {
+    "id": 39,
+    "key": "paramountplus",
+    "name": "Paramount+",
+    "category": "Streaming",
+    "logo": "paramountplus"
+  },
+  {
+    "id": 40,
+    "key": "discoveryplus",
+    "name": "Discovery+",
+    "category": "Streaming",
+    "logo": "discoveryplus"
+  },
+  {
+    "id": 41,
+    "key": "peacock",
+    "name": "Peacock",
+    "category": "Streaming",
+    "logo": "peacock"
+  },
+  {
+    "id": 42,
+    "key": "crunchyroll",
+    "name": "Crunchyroll",
+    "category": "Streaming",
+    "logo": "crunchyroll"
+  },
+  {
+    "id": 43,
+    "key": "mubi",
+    "name": "MUBI",
+    "category": "Streaming",
+    "logo": "mubi"
+  },
+  {
+    "id": 44,
+    "key": "curiosity_stream",
+    "name": "Curiosity Stream",
+    "category": "Streaming",
+    "logo": "curiositystream"
+  },
+  {
+    "id": 45,
+    "key": "skillshare",
+    "name": "Skillshare",
+    "category": "Education",
+    "logo": "skillshare"
+  },
+  {
+    "id": 46,
+    "key": "masterclass",
+    "name": "MasterClass",
+    "category": "Education",
+    "logo": "masterclass"
+  },
+  {
+    "id": 47,
+    "key": "coursera_plus",
+    "name": "Coursera Plus",
+    "category": "Education",
+    "logo": "coursera"
+  },
+  {
+    "id": 48,
+    "key": "udemy",
+    "name": "Udemy",
+    "category": "Education",
+    "logo": "udemy"
+  },
+  {
+    "id": 49,
+    "key": "brilliant",
+    "name": "Brilliant",
+    "category": "Education",
+    "logo": "brilliant"
+  },
+  {
+    "id": 50,
+    "key": "duolingo_plus",
+    "name": "Duolingo Plus",
+    "category": "Education",
+    "logo": "duolingo"
+  },
+  {
+    "id": 51,
+    "key": "rosetta_stone",
+    "name": "Rosetta Stone",
+    "category": "Education",
+    "logo": "rosettastone"
+  },
+  {
+    "id": 52,
+    "key": "the_new_york_times",
+    "name": "The New York Times",
+    "category": "News & Media",
+    "logo": "nytimes"
+  },
+  {
+    "id": 53,
+    "key": "the_washington_post",
+    "name": "The Washington Post",
+    "category": "News & Media",
+    "logo": "washingtonpost"
+  },
+  {
+    "id": 54,
+    "key": "the_economist",
+    "name": "The Economist",
+    "category": "News & Media",
+    "logo": "economist"
+  },
+  {
+    "id": 55,
+    "key": "medium_membership",
+    "name": "Medium Membership",
+    "category": "News & Media",
+    "logo": "medium"
+  },
+  {
+    "id": 56,
+    "key": "substack",
+    "name": "Substack",
+    "category": "News & Media",
+    "logo": "substack"
+  },
+  {
+    "id": 57,
+    "key": "bloomberg",
+    "name": "Bloomberg",
+    "category": "Finance",
+    "logo": "bloomberg"
+  },
+  {
+    "id": 58,
+    "key": "tradingview",
+    "name": "TradingView",
+    "category": "Finance",
+    "logo": "tradingview"
+  },
+  {
+    "id": 59,
+    "key": "seeking_alpha",
+    "name": "Seeking Alpha",
+    "category": "Finance",
+    "logo": "seekingalpha"
+  },
+  {
+    "id": 60,
+    "key": "ynab",
+    "name": "YNAB",
+    "category": "Finance",
+    "logo": "ynab"
+  },
+  {
+    "id": 61,
+    "key": "quickbooks",
+    "name": "QuickBooks",
+    "category": "Finance",
+    "logo": "quickbooks"
+  },
+  {
+    "id": 62,
+    "key": "grammarly",
+    "name": "Grammarly",
+    "category": "Software",
+    "logo": "grammarly"
+  },
+  {
+    "id": 63,
+    "key": "proton_mail",
+    "name": "Proton Mail",
+    "category": "Productivity",
+    "logo": "protonmail"
+  },
+  {
+    "id": 64,
+    "key": "proton_vpn",
+    "name": "Proton VPN",
+    "category": "Software",
+    "logo": "protonvpn"
+  },
+  {
+    "id": 65,
+    "key": "nordvpn",
+    "name": "NordVPN",
+    "category": "Software",
+    "logo": "nordvpn"
+  },
+  {
+    "id": 66,
+    "key": "expressvpn",
+    "name": "ExpressVPN",
+    "category": "Software",
+    "logo": "expressvpn"
+  },
+  {
+    "id": 67,
+    "key": "surfshark",
+    "name": "Surfshark",
+    "category": "Software",
+    "logo": "surfshark"
+  },
+  {
+    "id": 68,
+    "key": "lastpass",
+    "name": "LastPass",
+    "category": "Productivity",
+    "logo": "lastpass"
+  },
+  {
+    "id": 69,
+    "key": "1password",
+    "name": "1Password",
+    "category": "Productivity",
+    "logo": "1password"
+  },
+  {
+    "id": 70,
+    "key": "bitwarden",
+    "name": "Bitwarden",
+    "category": "Productivity",
+    "logo": "bitwarden"
+  },
+  {
+    "id": 71,
+    "key": "squarespace",
+    "name": "Squarespace",
+    "category": "Software",
+    "logo": "squarespace"
+  },
+  {
+    "id": 72,
+    "key": "wix",
+    "name": "Wix",
+    "category": "Software",
+    "logo": "wix"
+  },
+  {
+    "id": 73,
+    "key": "shopify",
+    "name": "Shopify",
+    "category": "Software",
+    "logo": "shopify"
+  },
+  {
+    "id": 74,
+    "key": "webflow",
+    "name": "Webflow",
+    "category": "Software",
+    "logo": "webflow"
+  },
+  {
+    "id": 75,
+    "key": "ahrefs",
+    "name": "Ahrefs",
+    "category": "Software",
+    "logo": "ahrefs"
+  },
+  {
+    "id": 76,
+    "key": "semrush",
+    "name": "SEMrush",
+    "category": "Software",
+    "logo": "semrush"
+  },
+  {
+    "id": 77,
+    "key": "moz",
+    "name": "Moz",
+    "category": "Software",
+    "logo": "moz"
+  },
+  {
+    "id": 78,
+    "key": "buffer",
+    "name": "Buffer",
+    "category": "Software",
+    "logo": "buffer"
+  },
+  {
+    "id": 79,
+    "key": "hootsuite",
+    "name": "Hootsuite",
+    "category": "Software",
+    "logo": "hootsuite"
+  },
+  {
+    "id": 80,
+    "key": "later",
+    "name": "Later",
+    "category": "Software",
+    "logo": "later"
+  },
+  {
+    "id": 81,
+    "key": "capcut_pro",
+    "name": "CapCut Pro",
+    "category": "Software",
+    "logo": "capcut"
+  },
+  {
+    "id": 82,
+    "key": "final_cut_pro",
+    "name": "Final Cut Pro",
+    "category": "Software",
+    "logo": "apple"
+  },
+  {
+    "id": 83,
+    "key": "adobe_lightroom",
+    "name": "Adobe Lightroom",
+    "category": "Software",
+    "logo": "adobe"
+  },
+  {
+    "id": 84,
+    "key": "adobe_premiere_pro",
+    "name": "Adobe Premiere Pro",
+    "category": "Software",
+    "logo": "adobe"
+  },
+  {
+    "id": 85,
+    "key": "envato_elements",
+    "name": "Envato Elements",
+    "category": "Software",
+    "logo": "envato"
+  },
+  {
+    "id": 86,
+    "key": "storyblocks",
+    "name": "Storyblocks",
+    "category": "Software",
+    "logo": "storyblocks"
+  },
+  {
+    "id": 87,
+    "key": "artlist",
+    "name": "Artlist",
+    "category": "Music",
+    "logo": "artlist"
+  },
+  {
+    "id": 88,
+    "key": "epidemic_sound",
+    "name": "Epidemic Sound",
+    "category": "Music",
+    "logo": "epidemicsound"
+  },
+  {
+    "id": 89,
+    "key": "soundcloud_go",
+    "name": "SoundCloud Go",
+    "category": "Music",
+    "logo": "soundcloud"
+  },
+  {
+    "id": 90,
+    "key": "strava",
+    "name": "Strava",
+    "category": "Productivity",
+    "logo": "strava"
+  },
+  {
+    "id": 91,
+    "key": "calm",
+    "name": "Calm",
+    "category": "Productivity",
+    "logo": "calm"
+  },
+  {
+    "id": 92,
+    "key": "headspace",
+    "name": "Headspace",
+    "category": "Productivity",
+    "logo": "headspace"
+  },
+  {
+    "id": 93,
+    "key": "myfitnesspal",
+    "name": "MyFitnessPal",
+    "category": "Productivity",
+    "logo": "myfitnesspal"
+  },
+  {
+    "id": 94,
+    "key": "noom",
+    "name": "Noom",
+    "category": "Productivity",
+    "logo": "noom"
+  },
+  {
+    "id": 95,
+    "key": "apple_fitnessplus",
+    "name": "Apple Fitness+",
+    "category": "Productivity",
+    "logo": "applefitness"
+  },
+  {
+    "id": 96,
+    "key": "google_workspace",
+    "name": "Google Workspace",
+    "category": "Software",
+    "logo": "google"
+  },
+  {
+    "id": 97,
+    "key": "slack",
+    "name": "Slack",
+    "category": "Productivity",
+    "logo": "slack"
+  },
+  {
+    "id": 98,
+    "key": "zoom",
+    "name": "Zoom",
+    "category": "Software",
+    "logo": "zoom"
+  },
+  {
+    "id": 99,
+    "key": "discord_nitro",
+    "name": "Discord Nitro",
+    "category": "Gaming",
+    "logo": "discord"
+  },
+  {
+    "id": 100,
+    "key": "telegram_premium",
+    "name": "Telegram Premium",
+    "category": "Productivity",
+    "logo": "telegram"
+  }
+]
