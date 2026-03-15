@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, Share, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
 import Constants from 'expo-constants';
 
 import { Card } from '@/components/Card';
@@ -7,7 +7,14 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { exportSubscriptions } from '@/utils/exportSubscriptions';
+import {
+  disableBillingNotificationsAsync,
+  requestNotificationPermissionAsync,
+  syncBillingNotificationsAsync,
+} from '@/utils/notifications';
 
 type SettingsRowProps = {
   label: string;
@@ -60,29 +67,81 @@ function SettingsRow({
 export default function SettingsScreen() {
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const clearAllSubscriptions = useSubscriptionStore((state) => state.clearAllSubscriptions);
+  const notificationsEnabled = usePreferencesStore((state) => state.notificationsEnabled);
+  const setNotificationsEnabled = usePreferencesStore((state) => state.setNotificationsEnabled);
 
   const tintColor = useThemeColor({}, 'tint');
   const surfaceSecondary = useThemeColor({}, 'surfaceSecondary');
   const textSecondary = useThemeColor({}, 'textSecondary');
   const dangerColor = useThemeColor({}, 'danger');
-
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [isUpdatingNotifications, setIsUpdatingNotifications] = useState(false);
 
   const appVersion =
     Constants.expoConfig?.version ??
     Constants.manifest2?.extra?.expoClient?.version ??
     '1.0.0';
 
-  async function handleExportData() {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      subscriptions,
-    };
+  async function handleRunExport(format: 'json' | 'csv' | 'pdf') {
+    try {
+      await exportSubscriptions(subscriptions, format);
+    } catch (error) {
+      Alert.alert(
+        'Export failed',
+        error instanceof Error ? error.message : 'Something went wrong while exporting data.'
+      );
+    }
+  }
 
-    await Share.share({
-      message: JSON.stringify(payload, null, 2),
-      title: 'Subscription Tracker Export',
-    });
+  function handleExportData() {
+    Alert.alert('Export subscriptions', 'Choose an export format.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'JSON', onPress: () => void handleRunExport('json') },
+      { text: 'Excel (CSV)', onPress: () => void handleRunExport('csv') },
+      { text: 'PDF', onPress: () => void handleRunExport('pdf') },
+    ]);
+  }
+
+  async function handleNotificationsToggle(nextValue: boolean) {
+    if (isUpdatingNotifications) {
+      return;
+    }
+
+    setIsUpdatingNotifications(true);
+
+    try {
+      if (!nextValue) {
+        await disableBillingNotificationsAsync();
+        setNotificationsEnabled(false);
+        return;
+      }
+
+      const permissionGranted = await requestNotificationPermissionAsync();
+
+      if (!permissionGranted) {
+        Alert.alert(
+          'Notifications disabled',
+          'Permission was not granted, so reminders will stay off.'
+        );
+        setNotificationsEnabled(false);
+        return;
+      }
+
+      await syncBillingNotificationsAsync(subscriptions);
+      setNotificationsEnabled(true);
+
+      Alert.alert(
+        'Billing reminders enabled',
+        'You will receive a daily reminder at 9:00 AM with upcoming renewal insights.'
+      );
+    } catch (error) {
+      setNotificationsEnabled(false);
+      Alert.alert(
+        'Notifications unavailable',
+        error instanceof Error ? error.message : 'Failed to update notification settings.'
+      );
+    } finally {
+      setIsUpdatingNotifications(false);
+    }
   }
 
   function handleClearAll() {
@@ -114,17 +173,26 @@ export default function SettingsScreen() {
         <SettingsRow label="App Version" value={appVersion} />
         <SettingsRow
           label="Notifications"
-          value={notificationsEnabled ? 'Enabled' : 'Disabled'}
+          value={
+            notificationsEnabled
+              ? 'Daily billing reminders at 9:00 AM'
+              : 'Disabled by default'
+          }
           trailing={
             <Switch
-              onValueChange={setNotificationsEnabled}
+              disabled={isUpdatingNotifications}
+              onValueChange={(value) => void handleNotificationsToggle(value)}
               value={notificationsEnabled}
               trackColor={{ false: surfaceSecondary, true: tintColor }}
               thumbColor="#FFFFFF"
             />
           }
         />
-        <SettingsRow label="Data Export" value="Export subscriptions as JSON" onPress={handleExportData} />
+        <SettingsRow
+          label="Data Export"
+          value="JSON, Excel-compatible CSV, or PDF"
+          onPress={handleExportData}
+        />
         <SettingsRow
           destructive
           label="Clear All Subscriptions"
