@@ -1,5 +1,5 @@
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/Card';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -98,28 +98,30 @@ export default function SubscriptionDetailScreen() {
     );
   }
 
+  const currentSubscription = subscription;
+
   function handlePause() {
-    if (subscription.status === 'paused') {
+    if (currentSubscription.status === 'paused') {
       return;
     }
 
-    Alert.alert('Pause subscription', `Pause ${subscription.name}?`, [
+    Alert.alert('Pause subscription', `Pause ${currentSubscription.name}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Pause',
-        onPress: () => pauseSubscription(subscription.id),
+        onPress: () => pauseSubscription(currentSubscription.id),
       },
     ]);
   }
 
   function handleDelete() {
-    Alert.alert('Delete subscription', `Delete ${subscription.name}? This cannot be undone.`, [
+    Alert.alert('Delete subscription', `Delete ${currentSubscription.name}? This cannot be undone.`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: () => {
-          deleteSubscription(subscription.id);
+          deleteSubscription(currentSubscription.id);
           router.replace('/(tabs)/subscriptions');
         },
       },
@@ -129,45 +131,51 @@ export default function SubscriptionDetailScreen() {
   function handleEdit() {
     router.push({
       pathname: '/subscription/edit',
-      params: { id: subscription.id },
+      params: { id: currentSubscription.id },
     });
   }
 
   return (
-    <ScreenContainer scrollable contentStyle={styles.container}>
+    <ScreenContainer scrollable includeTopInset={false} contentStyle={styles.container}>
       <Card style={styles.heroCard}>
         <View style={[styles.logoBadge, { backgroundColor: surfaceSecondary }]}>
-          <ThemedText style={styles.logoText}>{getLogoFallback(subscription.name)}</ThemedText>
+          <ThemedText style={styles.logoText}>{getLogoFallback(currentSubscription.name)}</ThemedText>
         </View>
 
         <View style={styles.heroCopy}>
-          <ThemedText style={styles.title}>{subscription.name}</ThemedText>
+          <ThemedText style={styles.title}>{currentSubscription.name}</ThemedText>
           <ThemedText style={[styles.heroMeta, { color: textSecondary }]}>
-            {formatCurrency(subscription.price, subscription.currency)} ·{' '}
-            {subscription.billingCycle === 'monthly' ? 'Monthly' : 'Yearly'}
+            {formatCurrency(currentSubscription.price, currentSubscription.currency)} ·{' '}
+            {currentSubscription.billingCycle === 'monthly' ? 'Monthly' : 'Yearly'}
           </ThemedText>
           <View style={[styles.statusPill, { backgroundColor: surfaceSecondary, borderColor }]}>
             <ThemedText style={[styles.statusText, { color: tintColor }]}>
-              {subscription.status}
+              {currentSubscription.status}
             </ThemedText>
           </View>
         </View>
       </Card>
 
       <Card padded={false}>
-        <DetailRow label="Price" value={formatCurrency(subscription.price, subscription.currency)} />
+        <DetailRow
+          label="Price"
+          value={formatCurrency(currentSubscription.price, currentSubscription.currency)}
+        />
         <DetailRow
           label="Billing Cycle"
-          value={subscription.billingCycle === 'monthly' ? 'Monthly' : 'Yearly'}
+          value={currentSubscription.billingCycle === 'monthly' ? 'Monthly' : 'Yearly'}
         />
-        <DetailRow label="Billing Day" value={String(subscription.billingDay)} />
-        <DetailRow label="Start Date" value={formatDate(subscription.startDate)} />
-        <DetailRow label="Next Billing Date" value={formatDate(subscription.nextBillingDate)} />
-        <DetailRow label="Category" value={subscription.category} />
+        <DetailRow label="Billing Day" value={String(currentSubscription.billingDay)} />
+        <DetailRow label="Start Date" value={formatDate(currentSubscription.startDate)} />
+        <DetailRow
+          label="Next Billing Date"
+          value={formatDate(currentSubscription.nextBillingDate)}
+        />
+        <DetailRow label="Category" value={currentSubscription.category} />
         <View style={styles.notesRow}>
           <ThemedText style={[styles.detailLabel, { color: textSecondary }]}>Notes</ThemedText>
           <ThemedText style={styles.notesValue}>
-            {subscription.notes.trim() ? subscription.notes : 'No notes'}
+            {currentSubscription.notes.trim() ? currentSubscription.notes : 'No notes'}
           </ThemedText>
         </View>
       </Card>
@@ -177,18 +185,18 @@ export default function SubscriptionDetailScreen() {
 
         <Pressable
           accessibilityRole="button"
-          disabled={subscription.status === 'paused'}
+          disabled={currentSubscription.status === 'paused'}
           onPress={handlePause}
           style={({ pressed }) => [
             styles.secondaryAction,
             {
               backgroundColor: surfaceSecondary,
               borderColor,
-              opacity: pressed && subscription.status !== 'paused' ? 0.88 : 1,
+              opacity: pressed && currentSubscription.status !== 'paused' ? 0.88 : 1,
             },
           ]}>
           <ThemedText style={styles.secondaryActionText}>
-            {subscription.status === 'paused' ? 'Paused' : 'Pause'}
+            {currentSubscription.status === 'paused' ? 'Paused' : 'Pause'}
           </ThemedText>
         </Pressable>
 
@@ -211,6 +219,7 @@ export default function SubscriptionDetailScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: Spacing.md,
     paddingBottom: 32,
     gap: Spacing.lg,
   },

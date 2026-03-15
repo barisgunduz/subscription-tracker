@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
 
 import { BillingCycle, Subscription } from '@/types/subscription';
 
@@ -29,6 +29,37 @@ type SubscriptionStore = {
 };
 
 const STORAGE_KEY = 'subscription-storage';
+const memoryStorage = new Map<string, string>();
+
+const safeStorage: StateStorage = {
+  getItem: async (name) => {
+    try {
+      const value = await AsyncStorage.getItem(name);
+
+      return value ?? memoryStorage.get(name) ?? null;
+    } catch {
+      return memoryStorage.get(name) ?? null;
+    }
+  },
+  setItem: async (name, value) => {
+    memoryStorage.set(name, value);
+
+    try {
+      await AsyncStorage.setItem(name, value);
+    } catch {
+      // Fall back to in-memory storage when the native module is unavailable.
+    }
+  },
+  removeItem: async (name) => {
+    memoryStorage.delete(name);
+
+    try {
+      await AsyncStorage.removeItem(name);
+    } catch {
+      // Ignore removal errors when the native module is unavailable.
+    }
+  },
+};
 
 function generateSubscriptionId() {
   return `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -199,7 +230,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
     }),
     {
       name: STORAGE_KEY,
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({
         subscriptions: state.subscriptions,
       }),

@@ -9,6 +9,7 @@ type ScreenContainerProps = PropsWithChildren<{
   scrollable?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
   style?: StyleProp<ViewStyle>;
+  includeTopInset?: boolean;
 }>;
 
 export function ScreenContainer({
@@ -16,12 +17,15 @@ export function ScreenContainer({
   scrollable = false,
   contentStyle,
   style,
+  includeTopInset = true,
 }: ScreenContainerProps) {
   const backgroundColor = useThemeColor({}, 'background');
 
   if (scrollable) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor }, style]}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor }, style]}
+        edges={includeTopInset ? undefined : ['left', 'right', 'bottom']}>
         <ScrollView
           contentContainerStyle={[styles.content, contentStyle]}
           style={styles.fill}
