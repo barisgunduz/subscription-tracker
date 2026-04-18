@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card } from '@/components/Card';
 import { ListItem } from '@/components/ListItem';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { ServiceLogo } from '@/components/ServiceLogo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -37,19 +38,6 @@ function getDaysRemaining(nextBillingDate: string) {
   const differenceInMs = normalizedBillingDate.getTime() - today.getTime();
 
   return Math.max(0, Math.ceil(differenceInMs / (1000 * 60 * 60 * 24)));
-}
-
-function getLogoFallback(name: string) {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-
-  if (words.length === 0) {
-    return '?';
-  }
-
-  return words
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? '')
-    .join('');
 }
 
 function formatCurrency(amount: number, currency: string) {
@@ -231,11 +219,12 @@ export default function HomeScreen() {
                 }
                 style={styles.listItem}
                 leading={
-                  <View style={[styles.logoBadge, { backgroundColor: mutedTint }]}>
-                    <ThemedText style={[styles.logoBadgeText, { color: accentMint }]}>
-                      {getLogoFallback(subscription.name)}
-                    </ThemedText>
-                  </View>
+                  <ServiceLogo
+                    serviceKey={subscription.serviceKey}
+                    name={subscription.name}
+                    size={46}
+                    style={[styles.logoBadge, { backgroundColor: mutedTint }]}
+                  />
                 }
                 trailing={
                   <View style={styles.trailing}>
@@ -352,14 +341,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
   },
   logoBadge: {
-    width: 46,
-    height: 46,
     borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoBadgeText: {
-    ...Typography.headline,
   },
   trailing: {
     alignItems: 'flex-end',

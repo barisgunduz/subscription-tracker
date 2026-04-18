@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { Card } from '@/components/Card';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { ServiceLogo } from '@/components/ServiceLogo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -32,19 +33,6 @@ function normalizeServiceKey(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
-}
-
-function getLogoFallback(name: string) {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-
-  if (words.length === 0) {
-    return '?';
-  }
-
-  return words
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? '')
-    .join('');
 }
 
 function parseNumber(value: string) {
@@ -147,7 +135,7 @@ export default function AddSubscriptionScreen() {
     addSubscription({
       serviceKey: activeService?.key ?? normalizeServiceKey(trimmedName),
       name: trimmedName,
-      logo: activeService?.logo ?? '',
+      logo: activeService?.key ?? '',
       price: parsedPrice,
       currency: 'USD',
       billingCycle,
@@ -240,14 +228,12 @@ export default function AddSubscriptionScreen() {
                         opacity: pressed ? 0.9 : 1,
                       },
                     ]}>
-                    <View style={styles.serviceBadge}>
-                      <ThemedText
-                        lightColor={isActive ? tintColor : undefined}
-                        darkColor={isActive ? tintColor : undefined}
-                        style={styles.serviceBadgeText}>
-                        {getLogoFallback(service.name)}
-                      </ThemedText>
-                    </View>
+                    <ServiceLogo
+                      serviceKey={service.key}
+                      name={service.name}
+                      size={42}
+                      style={styles.serviceBadge}
+                    />
                     <ThemedText
                       lightColor={isActive ? '#FFFFFF' : undefined}
                       darkColor={isActive ? '#FFFFFF' : undefined}
@@ -510,15 +496,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   serviceBadge: {
-    width: 42,
-    height: 42,
     borderRadius: Radius.md,
     backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  serviceBadgeText: {
-    ...Typography.headline,
   },
   serviceName: {
     ...Typography.headline,

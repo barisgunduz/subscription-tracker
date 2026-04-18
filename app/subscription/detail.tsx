@@ -4,6 +4,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Card } from '@/components/Card';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { ServiceLogo } from '@/components/ServiceLogo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -33,19 +34,6 @@ function formatDate(value: string) {
     day: 'numeric',
     year: 'numeric',
   }).format(date);
-}
-
-function getLogoFallback(name: string) {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-
-  if (words.length === 0) {
-    return '?';
-  }
-
-  return words
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? '')
-    .join('');
 }
 
 type DetailRowProps = {
@@ -138,9 +126,12 @@ export default function SubscriptionDetailScreen() {
   return (
     <ScreenContainer scrollable includeTopInset={false} contentStyle={styles.container}>
       <Card style={styles.heroCard}>
-        <View style={[styles.logoBadge, { backgroundColor: surfaceSecondary }]}>
-          <ThemedText style={styles.logoText}>{getLogoFallback(currentSubscription.name)}</ThemedText>
-        </View>
+        <ServiceLogo
+          serviceKey={currentSubscription.serviceKey}
+          name={currentSubscription.name}
+          size={72}
+          style={[styles.logoBadge, { backgroundColor: surfaceSecondary }]}
+        />
 
         <View style={styles.heroCopy}>
           <ThemedText style={styles.title}>{currentSubscription.name}</ThemedText>
@@ -241,14 +232,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   logoBadge: {
-    width: 72,
-    height: 72,
     borderRadius: Radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    ...Typography.title2,
   },
   heroCopy: {
     alignItems: 'center',

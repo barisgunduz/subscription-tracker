@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { Card } from '@/components/Card';
 import { ListItem } from '@/components/ListItem';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { ServiceLogo } from '@/components/ServiceLogo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -22,19 +23,6 @@ const SORT_OPTIONS: { label: string; value: SortOption }[] = [
 ];
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-function getLogoFallback(name: string) {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-
-  if (words.length === 0) {
-    return '?';
-  }
-
-  return words
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? '')
-    .join('');
-}
 
 function formatCurrency(amount: number, currency: string) {
   try {
@@ -432,11 +420,12 @@ export default function SubscriptionsScreen() {
                 })
               }
               leading={
-                <View style={[styles.logoBadge, { backgroundColor: surfaceSecondary }]}>
-                  <ThemedText style={styles.logoBadgeText}>
-                    {getLogoFallback(subscription.name)}
-                  </ThemedText>
-                </View>
+                <ServiceLogo
+                  serviceKey={subscription.serviceKey}
+                  name={subscription.name}
+                  size={44}
+                  style={[styles.logoBadge, { backgroundColor: surfaceSecondary }]}
+                />
               }
               trailing={
                 <View style={styles.trailing}>
@@ -603,14 +592,7 @@ const styles = StyleSheet.create({
     ...Typography.footnote,
   },
   logoBadge: {
-    width: 44,
-    height: 44,
     borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoBadgeText: {
-    ...Typography.headline,
   },
   trailing: {
     alignItems: 'flex-end',
