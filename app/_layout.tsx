@@ -18,6 +18,7 @@ export default function RootLayout() {
       <NotificationSync />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen
           name="subscription/add"
           options={{ presentation: 'modal', title: 'Add Subscription' }}
