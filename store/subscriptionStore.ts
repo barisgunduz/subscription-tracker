@@ -20,6 +20,7 @@ type SubscriptionStore = {
   deleteSubscription: (id: string) => void;
   clearAllSubscriptions: () => void;
   pauseSubscription: (id: string) => void;
+  restartSubscription: (id: string) => void;
   calculateNextBillingDate: (
     billingCycle: BillingCycle,
     billingDay: number,
@@ -77,6 +78,10 @@ function parseDate(value: string) {
 
 function toIsoDate(date: Date) {
   return date.toISOString().split('T')[0];
+}
+
+function addDays(date: Date, days: number) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
 
 function getDaysInMonth(year: number, monthIndex: number) {
@@ -159,17 +164,19 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
       addSubscription: (subscription) =>
         set((state) => {
+          const renewalDate = subscription.renewalDate ?? subscription.startDate;
           const nextBillingDate =
             subscription.nextBillingDate ??
             calculateNextBillingDateInternal(
               subscription.billingCycle,
               subscription.billingDay,
-              subscription.startDate
+              renewalDate
             );
 
           const newSubscription: Subscription = {
             ...subscription,
             id: subscription.id ?? generateSubscriptionId(),
+            renewalDate,
             nextBillingDate,
           };
 
@@ -197,7 +204,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
                 calculateNextBillingDateInternal(
                   merged.billingCycle,
                   merged.billingDay,
-                  merged.startDate
+                  merged.renewalDate
                 ),
             };
           }),
@@ -225,12 +232,55 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           ),
         })),
 
+      restartSubscription: (id) =>
+        set((state) => ({
+          subscriptions: state.subscriptions.map((subscription) => {
+            if (subscription.id !== id) {
+              return subscription;
+            }
+
+            const restartedAt = new Date();
+            const restartedRenewalDate = toIsoDate(restartedAt);
+            const restartedBillingDay = restartedAt.getDate();
+            const nextReferenceDate = toIsoDate(addDays(restartedAt, 1));
+
+            return {
+              ...subscription,
+              status: 'active',
+              renewalDate: restartedRenewalDate,
+              billingDay: restartedBillingDay,
+              nextBillingDate: calculateNextBillingDateInternal(
+                subscription.billingCycle,
+                restartedBillingDay,
+                restartedRenewalDate,
+                nextReferenceDate
+              ),
+            };
+          }),
+        })),
+
       calculateNextBillingDate: (billingCycle, billingDay, startDate, fromDate) =>
         calculateNextBillingDateInternal(billingCycle, billingDay, startDate, fromDate),
     }),
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => safeStorage),
+      merge: (persistedState, currentState) => {
+        const typedState = persistedState as Partial<SubscriptionStore> | undefined;
+
+        if (!typedState?.subscriptions) {
+          return currentState;
+        }
+
+        return {
+          ...currentState,
+          ...typedState,
+          subscriptions: typedState.subscriptions.map((subscription) => ({
+            ...subscription,
+            renewalDate: subscription.renewalDate ?? subscription.startDate,
+          })),
+        };
+      },
       partialize: (state) => ({
         subscriptions: state.subscriptions,
       }),

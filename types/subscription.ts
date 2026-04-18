@@ -16,6 +16,7 @@ export type Subscription = {
   billingCycle: BillingCycle;
   billingDay: number;
   startDate: string;
+  renewalDate: string;
   nextBillingDate: string;
   category: string;
   status: SubscriptionStatus;

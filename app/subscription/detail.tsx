@@ -60,6 +60,7 @@ export default function SubscriptionDetailScreen() {
 
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const pauseSubscription = useSubscriptionStore((state) => state.pauseSubscription);
+  const restartSubscription = useSubscriptionStore((state) => state.restartSubscription);
   const deleteSubscription = useSubscriptionStore((state) => state.deleteSubscription);
 
   const tintColor = useThemeColor({}, 'tint');
@@ -90,6 +91,13 @@ export default function SubscriptionDetailScreen() {
 
   function handlePause() {
     if (currentSubscription.status === 'paused') {
+      Alert.alert('Restart subscription', `Restart ${currentSubscription.name} today?`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Restart',
+          onPress: () => restartSubscription(currentSubscription.id),
+        },
+      ]);
       return;
     }
 
@@ -158,6 +166,7 @@ export default function SubscriptionDetailScreen() {
         />
         <DetailRow label="Billing Day" value={String(currentSubscription.billingDay)} />
         <DetailRow label="Start Date" value={formatDate(currentSubscription.startDate)} />
+        <DetailRow label="Renewal Date" value={formatDate(currentSubscription.renewalDate)} />
         <DetailRow
           label="Next Billing Date"
           value={formatDate(currentSubscription.nextBillingDate)}
@@ -176,18 +185,17 @@ export default function SubscriptionDetailScreen() {
 
         <Pressable
           accessibilityRole="button"
-          disabled={currentSubscription.status === 'paused'}
           onPress={handlePause}
           style={({ pressed }) => [
             styles.secondaryAction,
             {
               backgroundColor: surfaceSecondary,
               borderColor,
-              opacity: pressed && currentSubscription.status !== 'paused' ? 0.88 : 1,
+              opacity: pressed ? 0.88 : 1,
             },
           ]}>
           <ThemedText style={styles.secondaryActionText}>
-            {currentSubscription.status === 'paused' ? 'Paused' : 'Pause'}
+            {currentSubscription.status === 'paused' ? 'Renew' : 'Pause'}
           </ThemedText>
         </Pressable>
 

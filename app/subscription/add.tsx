@@ -141,6 +141,7 @@ export default function AddSubscriptionScreen() {
       billingCycle,
       billingDay: normalizedBillingDay,
       startDate: toIsoDate(new Date()),
+      renewalDate: toIsoDate(new Date()),
       category: trimmedCategory,
       status: 'active',
       notes: trimmedNotes,
