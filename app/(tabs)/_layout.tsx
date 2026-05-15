@@ -7,12 +7,14 @@ import { FloatingButton } from '@/components/FloatingButton';
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useI18n } from '@/utils/i18n';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const pathname = usePathname();
   const { view } = useGlobalSearchParams<{ view?: string }>();
+  const { t } = useI18n();
   const palette = Colors[colorScheme ?? 'light'];
   const isSubscriptionsRoute = pathname === '/subscriptions';
   const isCalendarView = view === 'calendar';
@@ -36,14 +38,14 @@ export default function TabLayout() {
         <Tabs.Screen
           name="home"
           options={{
-            title: 'Home',
+            title: t('home'),
             tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
           }}
         />
         <Tabs.Screen
           name="subscriptions"
           options={{
-            title: 'Subscriptions',
+            title: t('subscriptions'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="wallet" size={size} color={color} />
             ),
@@ -52,14 +54,14 @@ export default function TabLayout() {
         <Tabs.Screen
           name="stats"
           options={{
-            title: 'Stats',
+            title: t('stats'),
             tabBarIcon: ({ color, size }) => <Ionicons name="bar-chart" size={size} color={color} />,
           }}
         />
         <Tabs.Screen
           name="settings"
           options={{
-            title: 'Settings',
+            title: t('settings'),
             tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
           }}
         />
@@ -68,7 +70,7 @@ export default function TabLayout() {
       {isSubscriptionsRoute ? (
         <FloatingButton
           accessibilityLabel={
-            isCalendarView ? 'Switch to subscriptions list view' : 'Switch to calendar view'
+            isCalendarView ? t('tabListView') : t('tabCalendarView')
           }
           onPress={() =>
             router.replace({
@@ -88,7 +90,7 @@ export default function TabLayout() {
       ) : null}
 
       <FloatingButton
-        accessibilityLabel="Add subscription"
+        accessibilityLabel={t('tabAddSubscription')}
         onPress={() => router.push('/subscription/add')}
         style={styles.fab}
         icon={<Ionicons name="add" size={28} color="#FFFFFF" />}

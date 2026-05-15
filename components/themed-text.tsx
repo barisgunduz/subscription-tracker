@@ -2,21 +2,31 @@ import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { usePreferencesStore } from '@/store/preferencesStore';
+import { translateKnownText } from '@/utils/i18n';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  translate?: boolean;
 };
 
 export function ThemedText({
+  children,
   style,
   lightColor,
   darkColor,
   type = 'default',
+  translate = true,
   ...rest
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const languageCode = usePreferencesStore((state) => state.languageCode);
+  const translatedChildren =
+    translate && typeof children === 'string'
+      ? translateKnownText(languageCode, children)
+      : children;
 
   return (
     <Text
@@ -29,8 +39,9 @@ export function ThemedText({
         type === 'link' ? styles.link : undefined,
         style,
       ]}
-      {...rest}
-    />
+      {...rest}>
+      {translatedChildren}
+    </Text>
   );
 }
 

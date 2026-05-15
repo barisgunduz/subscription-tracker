@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "Suburio",
-    "slug": "suburio",
+    "name": "Substrack",
+    "slug": "substrack",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Suburio-Logo.png",
-    "scheme": "suburio",
+    "scheme": "substrack",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.barisgunduz.suburio"
+      "bundleIdentifier": "com.barisgunduz.substrack"
     },
     "android": {
-      "package": "com.barisgunduz.suburio",
+      "package": "com.barisgunduz.substrack",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/Suburio-Logo.png",

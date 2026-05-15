@@ -7,8 +7,17 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { Subscription } from '@/types/subscription';
+import { getCategoryTranslationKey } from '@/utils/categories';
+import {
+  AppCurrencyCode,
+  convertCurrency,
+  ExchangeRates,
+  formatCurrency,
+} from '@/utils/currency';
+import { useI18n } from '@/utils/i18n';
 
 const CATEGORY_ORDER = [
   'Streaming',
@@ -24,24 +33,34 @@ const CATEGORY_ORDER = [
   'Other',
 ] as const;
 
-function getNormalizedMonthlyPrice(subscription: Subscription) {
-  return subscription.billingCycle === 'monthly' ? subscription.price : subscription.price / 12;
+function getNormalizedMonthlyPrice(
+  subscription: Subscription,
+  displayCurrency: AppCurrencyCode,
+  exchangeRates: ExchangeRates
+) {
+  const price = convertCurrency(
+    subscription.price,
+    subscription.currency,
+    displayCurrency,
+    exchangeRates
+  );
+
+  return subscription.billingCycle === 'monthly' ? price : price / 12;
 }
 
-function getYearlyProjection(subscription: Subscription) {
-  return subscription.billingCycle === 'monthly' ? subscription.price * 12 : subscription.price;
-}
+function getYearlyProjection(
+  subscription: Subscription,
+  displayCurrency: AppCurrencyCode,
+  exchangeRates: ExchangeRates
+) {
+  const price = convertCurrency(
+    subscription.price,
+    subscription.currency,
+    displayCurrency,
+    exchangeRates
+  );
 
-function formatCurrency(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
+  return subscription.billingCycle === 'monthly' ? price * 12 : price;
 }
 
 type InsightCardProps = {
@@ -69,7 +88,10 @@ function InsightCard({ label, value, meta, icon, accent, backgroundColor }: Insi
 }
 
 export default function StatsScreen() {
+  const { locale, t } = useI18n();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
+  const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
+  const exchangeRates = usePreferencesStore((state) => state.exchangeRates);
   const textSecondary = useThemeColor({}, 'textSecondary');
   const dividerColor = useThemeColor({}, 'divider');
   const surfaceSecondary = useThemeColor({}, 'surfaceSecondary');
@@ -83,15 +105,16 @@ export default function StatsScreen() {
   const accentGoldSoft = useThemeColor({}, 'accentGoldSoft');
 
   const activeSubscriptions = subscriptions.filter((subscription) => subscription.status === 'active');
-  const displayCurrency = activeSubscriptions[0]?.currency ?? 'USD';
 
   const monthlyTotal = activeSubscriptions.reduce(
-    (total, subscription) => total + getNormalizedMonthlyPrice(subscription),
+    (total, subscription) =>
+      total + getNormalizedMonthlyPrice(subscription, displayCurrency, exchangeRates),
     0
   );
 
   const yearlyProjection = activeSubscriptions.reduce(
-    (total, subscription) => total + getYearlyProjection(subscription),
+    (total, subscription) =>
+      total + getYearlyProjection(subscription, displayCurrency, exchangeRates),
     0
   );
 
@@ -110,7 +133,8 @@ export default function StatsScreen() {
     });
 
     const monthlySpend = matchingSubscriptions.reduce(
-      (total, subscription) => total + getNormalizedMonthlyPrice(subscription),
+      (total, subscription) =>
+        total + getNormalizedMonthlyPrice(subscription, displayCurrency, exchangeRates),
       0
     );
 
@@ -125,41 +149,46 @@ export default function StatsScreen() {
     .sort((left, right) => right.monthlySpend - left.monthlySpend || right.count - left.count);
 
   const topCategory = categoryBreakdown[0];
+  const translateCategory = (category: string) => {
+    const key = getCategoryTranslationKey(category);
+
+    return key ? t(key) : category;
+  };
 
   const insightCards = [
     {
-      label: 'Active subscriptions',
+      label: t('activeSubscriptions'),
       value: String(activeSubscriptions.length),
-      meta: topCategory ? `${topCategory.category} leads` : 'No active plans yet',
+      meta: topCategory ? t('topCategoryLeads', { category: translateCategory(topCategory.category) }) : t('noActivePlans'),
       icon: 'layers-outline' as const,
       accent: accentBlue,
       backgroundColor: accentBlueSoft,
     },
     {
-      label: 'Average monthly cost',
-      value: formatCurrency(averageSubscriptionCost, displayCurrency),
-      meta: activeSubscriptions.length > 0 ? 'Per active subscription' : 'Add a plan to compare',
+      label: t('averageMonthlyCost'),
+      value: formatCurrency(averageSubscriptionCost, displayCurrency, locale),
+      meta: activeSubscriptions.length > 0 ? t('perActiveSubscription') : t('addPlanToCompare'),
       icon: 'wallet-outline' as const,
       accent: accentMint,
       backgroundColor: accentMintSoft,
     },
     {
-      label: 'Top category',
-      value: topCategory?.category ?? 'None yet',
+      label: t('topCategory'),
+      value: topCategory ? translateCategory(topCategory.category) : t('noneYet'),
       meta: topCategory
-        ? formatCurrency(topCategory.monthlySpend, displayCurrency)
-        : 'No monthly spend tracked',
+        ? formatCurrency(topCategory.monthlySpend, displayCurrency, locale)
+        : t('noMonthlySpend'),
       icon: 'podium-outline' as const,
       accent: accentPeach,
       backgroundColor: accentPeachSoft,
     },
     {
-      label: 'Yearly projection',
-      value: formatCurrency(yearlyProjection, displayCurrency),
+      label: t('yearlyProjection'),
+      value: formatCurrency(yearlyProjection, displayCurrency, locale),
       meta:
         monthlyTotal > 0
-          ? `${formatCurrency(monthlyTotal, displayCurrency)} normalized monthly`
-          : 'No active recurring spend',
+          ? t('normalizedMonthly', { amount: formatCurrency(monthlyTotal, displayCurrency, locale) })
+          : t('noActiveRecurringSpend'),
       icon: 'sparkles-outline' as const,
       accent: accentGold,
       backgroundColor: accentGoldSoft,
@@ -171,9 +200,9 @@ export default function StatsScreen() {
       <Card style={[styles.heroCard, { backgroundColor: accentMintSoft, borderColor: accentMintSoft }]}>
         <View style={styles.heroTopRow}>
           <View>
-            <ThemedText style={[styles.heroEyebrow, { color: accentMint }]}>Monthly Spend</ThemedText>
+            <ThemedText style={[styles.heroEyebrow, { color: accentMint }]}>{t('monthlySpend')}</ThemedText>
             <ThemedText style={styles.heroValue}>
-              {formatCurrency(monthlyTotal, displayCurrency)}
+              {formatCurrency(monthlyTotal, displayCurrency, locale)}
             </ThemedText>
           </View>
           <View style={[styles.heroIconWrap, { backgroundColor: accentMint }]}>
@@ -183,21 +212,21 @@ export default function StatsScreen() {
 
         <ThemedText style={[styles.heroMeta, { color: textSecondary }]}>
           {activeSubscriptions.length > 0
-            ? `Across ${activeSubscriptions.length} active subscriptions`
-            : 'Add subscriptions to unlock spending insights'}
+            ? t('acrossActiveSubscriptions', { count: activeSubscriptions.length })
+            : t('addSubscriptionsToUnlock')}
         </ThemedText>
 
         <View style={styles.heroFooter}>
           <View style={[styles.heroPill, { backgroundColor: '#FFFFFFAA' }]}>
-            <ThemedText style={styles.heroPillLabel}>Yearly</ThemedText>
+            <ThemedText style={styles.heroPillLabel}>{t('yearly')}</ThemedText>
             <ThemedText style={styles.heroPillValue}>
-              {formatCurrency(yearlyProjection, displayCurrency)}
+              {formatCurrency(yearlyProjection, displayCurrency, locale)}
             </ThemedText>
           </View>
           <View style={[styles.heroPill, { backgroundColor: '#FFFFFFAA' }]}>
-            <ThemedText style={styles.heroPillLabel}>Average</ThemedText>
+            <ThemedText style={styles.heroPillLabel}>{t('average')}</ThemedText>
             <ThemedText style={styles.heroPillValue}>
-              {formatCurrency(averageSubscriptionCost, displayCurrency)}
+              {formatCurrency(averageSubscriptionCost, displayCurrency, locale)}
             </ThemedText>
           </View>
         </View>
@@ -211,18 +240,18 @@ export default function StatsScreen() {
 
       <View style={styles.sectionHeader}>
         <View style={styles.sectionCopy}>
-          <ThemedText style={styles.sectionTitle}>Category Breakdown</ThemedText>
+          <ThemedText style={styles.sectionTitle}>{t('categoryBreakdown')}</ThemedText>
           <ThemedText style={[styles.sectionMeta, { color: textSecondary }]}>
-            Ranked by normalized monthly spend
+            {t('rankedByMonthlySpend')}
           </ThemedText>
         </View>
       </View>
 
       {categoryBreakdown.length === 0 ? (
         <Card>
-          <ThemedText style={styles.emptyTitle}>No stats to show yet</ThemedText>
+          <ThemedText style={styles.emptyTitle}>{t('noStats')}</ThemedText>
           <ThemedText style={[styles.emptyCopy, { color: textSecondary }]}>
-            Add active subscriptions to see category trends, top spend areas, and budget signals.
+            {t('noStatsBody')}
           </ThemedText>
         </Card>
       ) : (
@@ -240,16 +269,16 @@ export default function StatsScreen() {
                     <ThemedText style={styles.categoryBadgeText}>{index + 1}</ThemedText>
                   </View>
                   <View style={styles.categoryText}>
-                    <ThemedText style={styles.categoryName}>{item.category}</ThemedText>
+                    <ThemedText style={styles.categoryName}>{translateCategory(item.category)}</ThemedText>
                     <ThemedText style={[styles.categoryMeta, { color: textSecondary }]}>
-                      {item.count === 1 ? '1 active subscription' : `${item.count} active subscriptions`}
+                      {item.count === 1 ? t('oneActiveSubscription') : t('activeSubscriptionsCount', { count: item.count })}
                     </ThemedText>
                   </View>
                 </View>
 
                 <View style={styles.categoryValues}>
                   <ThemedText style={styles.categoryValue}>
-                    {formatCurrency(item.monthlySpend, displayCurrency)}
+                    {formatCurrency(item.monthlySpend, displayCurrency, locale)}
                   </ThemedText>
                   <ThemedText style={[styles.categoryShare, { color: textSecondary }]}>
                     {Math.round(item.share * 100)}%

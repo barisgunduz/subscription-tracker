@@ -15,8 +15,12 @@ import { ServiceLogo } from '@/components/ServiceLogo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { BILLING_CYCLES, BillingCycle } from '@/types/subscription';
+import { getCategoryTranslationKey } from '@/utils/categories';
+import { appCurrencies, AppCurrencyCode, getAppCurrency } from '@/utils/currency';
+import { useI18n } from '@/utils/i18n';
 import { Service, searchServices } from '@/utils/serviceLookup';
 
 type ServiceMode = 'default' | 'custom';
@@ -54,7 +58,11 @@ function clampBillingDay(value: string) {
 
 export default function AddSubscriptionScreen() {
   const router = useRouter();
+  const { t } = useI18n();
   const addSubscription = useSubscriptionStore((state) => state.addSubscription);
+  const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
+  const exchangeRates = usePreferencesStore((state) => state.exchangeRates);
+  const exchangeRatesDate = usePreferencesStore((state) => state.exchangeRatesDate);
 
   const tintColor = useThemeColor({}, 'tint');
   const borderColor = useThemeColor({}, 'border');
@@ -68,6 +76,7 @@ export default function AddSubscriptionScreen() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [serviceName, setServiceName] = useState('');
   const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState<AppCurrencyCode>(displayCurrency);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [billingDay, setBillingDay] = useState(String(new Date().getDate()));
   const [category, setCategory] = useState('');
@@ -75,6 +84,12 @@ export default function AddSubscriptionScreen() {
   const [validationMessage, setValidationMessage] = useState('');
 
   const matchingServices = searchServices(serviceQuery).slice(0, 8);
+  const selectedCurrency = getAppCurrency(currency);
+  const translateCategory = (value: string) => {
+    const key = getCategoryTranslationKey(value);
+
+    return key ? t(key) : value;
+  };
 
   function applySelectedService(service: Service) {
     setSelectedService(service);
@@ -106,29 +121,29 @@ export default function AddSubscriptionScreen() {
     const normalizedBillingDay = Number(clampBillingDay(billingDay));
 
     if (!trimmedName) {
-      setValidationMessage('Service name is required.');
+      setValidationMessage(t('serviceNameRequired'));
       return;
     }
 
     if (parsedPrice === null || parsedPrice <= 0) {
-      setValidationMessage('Enter a valid price greater than zero.');
+      setValidationMessage(t('priceInvalid'));
       return;
     }
 
     if (!normalizedBillingDay) {
-      setValidationMessage('Billing day must be between 1 and 31.');
+      setValidationMessage(t('billingDayInvalid'));
       return;
     }
 
     if (!trimmedCategory) {
-      setValidationMessage('Category is required.');
+      setValidationMessage(t('categoryRequired'));
       return;
     }
 
     const activeService = serviceMode === 'default' ? selectedService : null;
 
     if (serviceMode === 'default' && !activeService) {
-      setValidationMessage('Select a service from the default list or switch to custom.');
+      setValidationMessage(t('selectDefaultService'));
       return;
     }
 
@@ -137,7 +152,9 @@ export default function AddSubscriptionScreen() {
       name: trimmedName,
       logo: activeService?.key ?? '',
       price: parsedPrice,
-      currency: 'USD',
+      currency,
+      exchangeRatesAtCreation: exchangeRates,
+      exchangeRatesDate,
       billingCycle,
       billingDay: normalizedBillingDay,
       startDate: toIsoDate(new Date()),
@@ -153,7 +170,7 @@ export default function AddSubscriptionScreen() {
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
       <Card>
-        <ThemedText style={styles.sectionTitle}>Service Type</ThemedText>
+        <ThemedText style={styles.sectionTitle}>{t('serviceType')}</ThemedText>
         <View style={styles.chipRow}>
           {(['default', 'custom'] as ServiceMode[]).map((mode) => {
             const isActive = mode === serviceMode;
@@ -175,7 +192,7 @@ export default function AddSubscriptionScreen() {
                   lightColor={isActive ? '#FFFFFF' : undefined}
                   darkColor={isActive ? '#FFFFFF' : undefined}
                   style={styles.modeChipText}>
-                  {mode === 'default' ? 'Default Service' : 'Custom Service'}
+                  {mode === 'default' ? t('defaultService') : t('customService')}
                 </ThemedText>
               </Pressable>
             );
@@ -184,12 +201,12 @@ export default function AddSubscriptionScreen() {
 
         {serviceMode === 'default' ? (
           <View style={styles.sectionContent}>
-            <ThemedText style={styles.fieldLabel}>Search Services</ThemedText>
+            <ThemedText style={styles.fieldLabel}>{t('searchServices')}</ThemedText>
             <TextInput
               autoCapitalize="none"
               autoCorrect={false}
               onChangeText={setServiceQuery}
-              placeholder="Search by name or category"
+              placeholder={t('searchByNameOrCategory')}
               placeholderTextColor={textSecondary}
               style={[
                 styles.input,
@@ -238,7 +255,7 @@ export default function AddSubscriptionScreen() {
                       lightColor={isActive ? '#EAF3FF' : undefined}
                       darkColor={isActive ? '#D9EBFF' : undefined}
                       style={styles.serviceCategory}>
-                      {service.category}
+                      {translateCategory(service.category)}
                     </ThemedText>
                   </Pressable>
                 );
@@ -249,15 +266,15 @@ export default function AddSubscriptionScreen() {
       </Card>
 
       <Card>
-        <ThemedText style={styles.sectionTitle}>Subscription Details</ThemedText>
+        <ThemedText style={styles.sectionTitle}>{t('subscriptionDetails')}</ThemedText>
 
         <View style={styles.sectionContent}>
           <View style={styles.fieldGroup}>
-            <ThemedText style={styles.fieldLabel}>Service Name</ThemedText>
+            <ThemedText style={styles.fieldLabel}>{t('serviceName')}</ThemedText>
             <TextInput
               editable={serviceMode === 'custom'}
               onChangeText={setServiceName}
-              placeholder="Enter service name"
+              placeholder={t('enterServiceName')}
               placeholderTextColor={textSecondary}
               style={[
                 styles.input,
@@ -274,7 +291,9 @@ export default function AddSubscriptionScreen() {
 
           <View style={styles.twoColumnRow}>
             <View style={styles.fieldGroupFlexible}>
-              <ThemedText style={styles.fieldLabel}>Price</ThemedText>
+              <ThemedText style={styles.fieldLabel}>
+                {t('price')} ({selectedCurrency.symbol})
+              </ThemedText>
               <TextInput
                 keyboardType="decimal-pad"
                 onChangeText={setPrice}
@@ -293,7 +312,7 @@ export default function AddSubscriptionScreen() {
             </View>
 
             <View style={styles.fieldGroupFlexible}>
-              <ThemedText style={styles.fieldLabel}>Billing Day</ThemedText>
+              <ThemedText style={styles.fieldLabel}>{t('billingDay')}</ThemedText>
               <TextInput
                 keyboardType="number-pad"
                 onChangeText={(value) => setBillingDay(clampBillingDay(value))}
@@ -313,7 +332,47 @@ export default function AddSubscriptionScreen() {
           </View>
 
           <View style={styles.fieldGroup}>
-            <ThemedText style={styles.fieldLabel}>Billing Cycle</ThemedText>
+            <ThemedText style={styles.fieldLabel}>{t('subscriptionCurrency')}</ThemedText>
+            <View style={styles.chipRow}>
+              {appCurrencies.map((option) => {
+                const isActive = option.code === currency;
+
+                return (
+                  <Pressable
+                    key={option.code}
+                    accessibilityRole="button"
+                    onPress={() => setCurrency(option.code)}
+                    style={({ pressed }) => [
+                      styles.optionChip,
+                      {
+                        backgroundColor: isActive ? tintColor : surfaceSecondary,
+                        borderColor: isActive ? tintColor : borderColor,
+                        opacity: pressed ? 0.9 : 1,
+                      },
+                    ]}>
+                    <ThemedText
+                      lightColor={isActive ? '#FFFFFF' : undefined}
+                      darkColor={isActive ? '#FFFFFF' : undefined}
+                      style={styles.optionChipText}>
+                      {t('currencyValue', { code: option.code, symbol: option.symbol })}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+            {exchangeRatesDate ? (
+              <ThemedText style={[styles.helperText, { color: textSecondary }]}>
+                {t('exchangeRateDate', { date: exchangeRatesDate })} ·{' '}
+                {t('exchangeRatesSummary', {
+                  eur: exchangeRates.EUR.toFixed(4),
+                  try: exchangeRates.TRY.toFixed(4),
+                })}
+              </ThemedText>
+            ) : null}
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <ThemedText style={styles.fieldLabel}>{t('billingCycle')}</ThemedText>
             <View style={styles.chipRow}>
               {BILLING_CYCLE_OPTIONS.map((option) => {
                 const isActive = option === billingCycle;
@@ -335,7 +394,7 @@ export default function AddSubscriptionScreen() {
                       lightColor={isActive ? '#FFFFFF' : undefined}
                       darkColor={isActive ? '#FFFFFF' : undefined}
                       style={styles.optionChipText}>
-                      {option === 'monthly' ? 'Monthly' : 'Yearly'}
+                      {option === 'monthly' ? t('monthly') : t('yearly')}
                     </ThemedText>
                   </Pressable>
                 );
@@ -344,10 +403,10 @@ export default function AddSubscriptionScreen() {
           </View>
 
           <View style={styles.fieldGroup}>
-            <ThemedText style={styles.fieldLabel}>Category</ThemedText>
+            <ThemedText style={styles.fieldLabel}>{t('category')}</ThemedText>
             <TextInput
               onChangeText={setCategory}
-              placeholder="Enter category"
+              placeholder={t('enterCategory')}
               placeholderTextColor={textSecondary}
               style={[
                 styles.input,
@@ -363,11 +422,11 @@ export default function AddSubscriptionScreen() {
           </View>
 
           <View style={styles.fieldGroup}>
-            <ThemedText style={styles.fieldLabel}>Notes</ThemedText>
+            <ThemedText style={styles.fieldLabel}>{t('notes')}</ThemedText>
             <TextInput
               multiline
               onChangeText={setNotes}
-              placeholder="Optional notes"
+              placeholder={t('optionalNotes')}
               placeholderTextColor={textSecondary}
               style={[
                 styles.input,
@@ -391,7 +450,7 @@ export default function AddSubscriptionScreen() {
         </ThemedText>
       ) : null}
 
-      <PrimaryButton onPress={handleSave} title="Save Subscription" />
+      <PrimaryButton onPress={handleSave} title={t('saveSubscription')} />
     </ScreenContainer>
   );
 }
@@ -467,6 +526,9 @@ const styles = StyleSheet.create({
   optionChipText: {
     ...Typography.footnote,
     fontWeight: '600',
+  },
+  helperText: {
+    ...Typography.footnote,
   },
   serviceRow: {
     paddingRight: Spacing.xs,

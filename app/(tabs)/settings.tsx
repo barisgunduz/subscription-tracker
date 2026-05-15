@@ -6,11 +6,14 @@ import Constants from 'expo-constants';
 import { Card } from '@/components/Card';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { ThemedText } from '@/components/themed-text';
+import { getAppLanguage } from '@/constants/languages';
 import { Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { appCurrencies, getAppCurrency } from '@/utils/currency';
 import { exportSubscriptions } from '@/utils/exportSubscriptions';
+import { useI18n } from '@/utils/i18n';
 import {
   disableBillingNotificationsAsync,
   requestNotificationPermissionAsync,
@@ -67,9 +70,13 @@ function SettingsRow({
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { t } = useI18n();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const clearAllSubscriptions = useSubscriptionStore((state) => state.clearAllSubscriptions);
+  const languageCode = usePreferencesStore((state) => state.languageCode);
+  const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
   const notificationsEnabled = usePreferencesStore((state) => state.notificationsEnabled);
+  const setDisplayCurrency = usePreferencesStore((state) => state.setDisplayCurrency);
   const setNotificationsEnabled = usePreferencesStore((state) => state.setNotificationsEnabled);
 
   const tintColor = useThemeColor({}, 'tint');
@@ -80,25 +87,41 @@ export default function SettingsScreen() {
     Constants.expoConfig?.version ??
     Constants.manifest2?.extra?.expoClient?.version ??
     '1.0.0';
+  const selectedLanguage = getAppLanguage(languageCode);
+  const selectedCurrency = getAppCurrency(displayCurrency);
 
   async function handleRunExport(format: 'json' | 'csv' | 'pdf') {
     try {
       await exportSubscriptions(subscriptions, format);
     } catch (error) {
       Alert.alert(
-        'Export failed',
-        error instanceof Error ? error.message : 'Something went wrong while exporting data.'
+        t('exportFailed'),
+        error instanceof Error ? error.message : t('exportFailedBody')
       );
     }
   }
 
   function handleExportData() {
-    Alert.alert('Export subscriptions', 'Choose an export format.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('exportSubscriptions'), t('chooseExportFormat'), [
+      { text: t('cancel'), style: 'cancel' },
       { text: 'JSON', onPress: () => void handleRunExport('json') },
       { text: 'Excel (CSV)', onPress: () => void handleRunExport('csv') },
       { text: 'PDF', onPress: () => void handleRunExport('pdf') },
     ]);
+  }
+
+  function handleCurrencySelect() {
+    Alert.alert(
+      t('currency'),
+      undefined,
+      [
+        ...appCurrencies.map((currency) => ({
+          text: t('currencyValue', { code: currency.code, symbol: currency.symbol }),
+          onPress: () => setDisplayCurrency(currency.code),
+        })),
+        { text: t('cancel'), style: 'cancel' as const },
+      ]
+    );
   }
 
   async function handleNotificationsToggle(nextValue: boolean) {
@@ -119,8 +142,8 @@ export default function SettingsScreen() {
 
       if (!permissionGranted) {
         Alert.alert(
-          'Notifications disabled',
-          'Permission was not granted, so reminders will stay off.'
+          t('notificationsDisabled'),
+          t('notificationsDisabledBody')
         );
         setNotificationsEnabled(false);
         return;
@@ -130,14 +153,14 @@ export default function SettingsScreen() {
       setNotificationsEnabled(true);
 
       Alert.alert(
-        'Billing reminders enabled',
-        'You will receive a daily reminder at 9:00 AM with upcoming renewal insights.'
+        t('billingRemindersEnabled'),
+        t('billingRemindersEnabledBody')
       );
     } catch (error) {
       setNotificationsEnabled(false);
       Alert.alert(
-        'Notifications unavailable',
-        error instanceof Error ? error.message : 'Failed to update notification settings.'
+        t('notificationsUnavailable'),
+        error instanceof Error ? error.message : t('notificationsUnavailableBody')
       );
     } finally {
       setIsUpdatingNotifications(false);
@@ -146,14 +169,14 @@ export default function SettingsScreen() {
 
   function handleClearAll() {
     if (subscriptions.length === 0) {
-      Alert.alert('No subscriptions', 'There are no subscriptions to clear.');
+      Alert.alert(t('noSubscriptions'), t('noSubscriptionsToClear'));
       return;
     }
 
-    Alert.alert('Clear all subscriptions', 'This will remove all saved subscriptions.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('clearAllSubscriptions'), t('clearAllSubscriptionsBody'), [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Clear All',
+        text: t('clearAll'),
         style: 'destructive',
         onPress: () => clearAllSubscriptions(),
       },
@@ -163,13 +186,13 @@ export default function SettingsScreen() {
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
       <Card padded={false}>
-        <SettingsRow label="App Version" value={appVersion} />
+        <SettingsRow label={t('appVersion')} value={appVersion} />
         <SettingsRow
-          label="Notifications"
+          label={t('notifications')}
           value={
             notificationsEnabled
-              ? 'Daily billing reminders at 9:00 AM'
-              : 'Disabled by default'
+              ? t('monthlyBillingReminders')
+              : t('disabledByDefault')
           }
           trailing={
             <Switch
@@ -182,23 +205,36 @@ export default function SettingsScreen() {
           }
         />
         <SettingsRow
-          label="Data Export"
-          value="JSON, Excel-compatible CSV, or PDF"
+          label={t('language')}
+          value={t(`languageName_${selectedLanguage.code}`)}
+          onPress={() => router.push('/language')}
+        />
+        <SettingsRow
+          label={t('currency')}
+          value={t('currencyValue', {
+            code: selectedCurrency.code,
+            symbol: selectedCurrency.symbol,
+          })}
+          onPress={handleCurrencySelect}
+        />
+        <SettingsRow
+          label={t('dataExport')}
+          value={t('dataExportValue')}
           onPress={handleExportData}
         />
         <SettingsRow
-          label="Support"
-          value="Help, app info, and contact"
+          label={t('support')}
+          value={t('supportValue')}
           onPress={() => router.push('/support')}
         />
         <SettingsRow
-          label="Privacy Policy"
-          value="How your data is handled"
+          label={t('privacyPolicy')}
+          value={t('privacyPolicyValue')}
           onPress={() => router.push('/privacy-policy')}
         />
         <SettingsRow
           destructive
-          label="Clear All Subscriptions"
+          label={t('clearAllSubscriptions')}
           onPress={handleClearAll}
           showBorder={false}
         />

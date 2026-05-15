@@ -10,6 +10,8 @@ import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { BILLING_CYCLES, BillingCycle } from '@/types/subscription';
+import { getAppCurrency } from '@/utils/currency';
+import { useI18n } from '@/utils/i18n';
 
 const BILLING_CYCLE_OPTIONS: BillingCycle[] = [...BILLING_CYCLES];
 
@@ -33,6 +35,7 @@ function clampBillingDay(value: string) {
 export default function EditSubscriptionScreen() {
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const router = useRouter();
+  const { t } = useI18n();
   const subscriptionId = Array.isArray(id) ? id[0] : id;
 
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
@@ -62,17 +65,24 @@ export default function EditSubscriptionScreen() {
     return (
       <ScreenContainer contentStyle={styles.notFoundContainer}>
         <Card>
-          <ThemedText style={styles.notFoundTitle}>Subscription not found</ThemedText>
+          <ThemedText style={styles.notFoundTitle}>{t('subscriptionNotFound')}</ThemedText>
           <ThemedText style={[styles.notFoundCopy, { color: textSecondary }]}>
-            This item may have been deleted or the link is invalid.
+            {t('subscriptionNotFoundBody')}
           </ThemedText>
           <View style={styles.notFoundAction}>
-            <PrimaryButton onPress={() => router.back()} title="Go Back" />
+            <PrimaryButton onPress={() => router.back()} title={t('goBack')} />
           </View>
         </Card>
       </ScreenContainer>
     );
   }
+
+  const currentSubscription = subscription;
+  const selectedCurrency = getAppCurrency(
+    currentSubscription.currency === 'EUR' || currentSubscription.currency === 'TRY'
+      ? currentSubscription.currency
+      : 'USD'
+  );
 
   function handleSave() {
     const parsedPrice = parseNumber(price);
@@ -81,21 +91,21 @@ export default function EditSubscriptionScreen() {
     const trimmedNotes = notes.trim();
 
     if (parsedPrice === null || parsedPrice <= 0) {
-      setValidationMessage('Enter a valid price greater than zero.');
+      setValidationMessage(t('priceInvalid'));
       return;
     }
 
     if (!normalizedBillingDay) {
-      setValidationMessage('Billing day must be between 1 and 31.');
+      setValidationMessage(t('billingDayInvalid'));
       return;
     }
 
     if (!trimmedCategory) {
-      setValidationMessage('Category is required.');
+      setValidationMessage(t('categoryRequired'));
       return;
     }
 
-    updateSubscription(subscription.id, {
+    updateSubscription(currentSubscription.id, {
       price: parsedPrice,
       billingDay: normalizedBillingDay,
       billingCycle,
@@ -105,22 +115,24 @@ export default function EditSubscriptionScreen() {
 
     router.replace({
       pathname: '/subscription/detail',
-      params: { id: subscription.id },
+      params: { id: currentSubscription.id },
     });
   }
 
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
       <Card>
-        <ThemedText style={styles.sectionTitle}>{subscription.name}</ThemedText>
+        <ThemedText style={styles.sectionTitle}>{currentSubscription.name}</ThemedText>
         <ThemedText style={[styles.sectionMeta, { color: textSecondary }]}>
-          Service name and logo stay unchanged here.
+          {t('serviceNameFixed')}
         </ThemedText>
 
         <View style={styles.sectionContent}>
           <View style={styles.twoColumnRow}>
             <View style={styles.fieldGroupFlexible}>
-              <ThemedText style={styles.fieldLabel}>Price</ThemedText>
+              <ThemedText style={styles.fieldLabel}>
+                {t('price')} ({selectedCurrency.symbol})
+              </ThemedText>
               <TextInput
                 keyboardType="decimal-pad"
                 onChangeText={setPrice}
@@ -139,7 +151,7 @@ export default function EditSubscriptionScreen() {
             </View>
 
             <View style={styles.fieldGroupFlexible}>
-              <ThemedText style={styles.fieldLabel}>Billing Day</ThemedText>
+              <ThemedText style={styles.fieldLabel}>{t('billingDay')}</ThemedText>
               <TextInput
                 keyboardType="number-pad"
                 onChangeText={(value) => setBillingDay(clampBillingDay(value))}
@@ -159,7 +171,7 @@ export default function EditSubscriptionScreen() {
           </View>
 
           <View style={styles.fieldGroup}>
-            <ThemedText style={styles.fieldLabel}>Billing Cycle</ThemedText>
+            <ThemedText style={styles.fieldLabel}>{t('billingCycle')}</ThemedText>
             <View style={styles.chipRow}>
               {BILLING_CYCLE_OPTIONS.map((option) => {
                 const isActive = option === billingCycle;
@@ -181,7 +193,7 @@ export default function EditSubscriptionScreen() {
                       lightColor={isActive ? '#FFFFFF' : undefined}
                       darkColor={isActive ? '#FFFFFF' : undefined}
                       style={styles.optionChipText}>
-                      {option === 'monthly' ? 'Monthly' : 'Yearly'}
+                      {option === 'monthly' ? t('monthly') : t('yearly')}
                     </ThemedText>
                   </Pressable>
                 );
@@ -190,10 +202,10 @@ export default function EditSubscriptionScreen() {
           </View>
 
           <View style={styles.fieldGroup}>
-            <ThemedText style={styles.fieldLabel}>Category</ThemedText>
+            <ThemedText style={styles.fieldLabel}>{t('category')}</ThemedText>
             <TextInput
               onChangeText={setCategory}
-              placeholder="Enter category"
+              placeholder={t('enterCategory')}
               placeholderTextColor={textSecondary}
               style={[
                 styles.input,
@@ -209,11 +221,11 @@ export default function EditSubscriptionScreen() {
           </View>
 
           <View style={styles.fieldGroup}>
-            <ThemedText style={styles.fieldLabel}>Notes</ThemedText>
+            <ThemedText style={styles.fieldLabel}>{t('notes')}</ThemedText>
             <TextInput
               multiline
               onChangeText={setNotes}
-              placeholder="Optional notes"
+              placeholder={t('optionalNotes')}
               placeholderTextColor={textSecondary}
               style={[
                 styles.input,
@@ -237,7 +249,7 @@ export default function EditSubscriptionScreen() {
         </ThemedText>
       ) : null}
 
-      <PrimaryButton onPress={handleSave} title="Save Changes" />
+      <PrimaryButton onPress={handleSave} title={t('saveChanges')} />
     </ScreenContainer>
   );
 }

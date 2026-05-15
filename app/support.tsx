@@ -5,48 +5,30 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { TranslationKey, useI18n } from '@/utils/i18n';
 
 const githubUrl = 'https://github.com/barisgunduz/subscription-tracker';
 const supportEmail = 'baris@gunduzmedya.com';
 
-const sections = [
-  {
-    title: 'App Features',
-    body:
-      'Suburio helps you save recurring subscriptions, see upcoming payments, review spending by category, pause or restart subscriptions, enable billing reminders, and export your data as JSON, CSV, or PDF.',
-  },
-  {
-    title: 'How to Use',
-    body:
-      'Add each subscription with its price, billing cycle, billing day, category, and optional notes. Use Home for upcoming renewals, Subscriptions for your full list, Stats for spending summaries, and Settings for notifications, exports, support, and privacy details.',
-  },
-  {
-    title: 'How Data Is Stored',
-    body:
-      'Your subscription data is stored locally on your device. There is no account system, no ads, and no server account connected to your saved subscription details.',
-  },
-  {
-    title: 'Open Source',
-    body:
-      'The app is open sourced. You can review the project, report issues, or collaborate through the GitHub repository.',
-  },
-  {
-    title: 'Contact',
-    body:
-      'For support questions, feedback, or collaboration requests, email the developer.',
-  },
+const sections: { titleKey: TranslationKey; bodyKey: TranslationKey }[] = [
+  { titleKey: 'appFeatures', bodyKey: 'appFeaturesBody' },
+  { titleKey: 'howToUse', bodyKey: 'howToUseBody' },
+  { titleKey: 'dataStored', bodyKey: 'dataStoredBody' },
+  { titleKey: 'openSource', bodyKey: 'openSourceBody' },
+  { titleKey: 'contact', bodyKey: 'contactBody' },
 ];
 
 export default function SupportScreen() {
   const textSecondary = useThemeColor({}, 'textSecondary');
   const tintColor = useThemeColor({}, 'tint');
   const dividerColor = useThemeColor({}, 'divider');
+  const { t } = useI18n();
 
   async function openGithub() {
     try {
       await Linking.openURL(githubUrl);
     } catch {
-      Alert.alert('Unable to open link', githubUrl);
+      Alert.alert(t('unableOpenLink'), githubUrl);
     }
   }
 
@@ -57,30 +39,30 @@ export default function SupportScreen() {
       const canOpenMail = await Linking.canOpenURL(mailUrl);
 
       if (!canOpenMail) {
-        Alert.alert('No mail app found', `Please email ${supportEmail}.`);
+        Alert.alert(t('noMailApp'), t('emailFallback', { email: supportEmail }));
         return;
       }
 
       await Linking.openURL(mailUrl);
     } catch {
-      Alert.alert('Unable to open mail app', `Please email ${supportEmail}.`);
+      Alert.alert(t('unableOpenMail'), t('emailFallback', { email: supportEmail }));
     }
   }
 
   return (
     <ScreenContainer scrollable includeTopInset={false} contentStyle={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>Support</ThemedText>
+        <ThemedText style={styles.title}>{t('support')}</ThemedText>
         <ThemedText style={[styles.subtitle, { color: textSecondary }]}>
-          Help, project details, and contact information.
+          {t('helpProjectContact')}
         </ThemedText>
       </View>
 
       <Card style={styles.card}>
         {sections.map((section) => (
-          <View key={section.title} style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>{section.title}</ThemedText>
-            <ThemedText style={[styles.body, { color: textSecondary }]}>{section.body}</ThemedText>
+          <View key={section.titleKey} style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>{t(section.titleKey)}</ThemedText>
+            <ThemedText style={[styles.body, { color: textSecondary }]}>{t(section.bodyKey)}</ThemedText>
           </View>
         ))}
 

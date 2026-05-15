@@ -1,3 +1,5 @@
+import { AppCurrencyCode, ExchangeRates } from '@/utils/currency';
+
 export const SUBSCRIPTION_STATUS = ['active', 'paused', 'cancelled'] as const;
 
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUS)[number];
@@ -12,7 +14,9 @@ export type Subscription = {
   name: string;
   logo: string;
   price: number;
-  currency: string;
+  currency: AppCurrencyCode;
+  exchangeRatesAtCreation?: ExchangeRates;
+  exchangeRatesDate?: string | null;
   billingCycle: BillingCycle;
   billingDay: number;
   startDate: string;

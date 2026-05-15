@@ -10,39 +10,22 @@ import { ServiceLogo } from '@/components/ServiceLogo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { Subscription } from '@/types/subscription';
+import { AppCurrencyCode, convertCurrency, ExchangeRates, formatCurrency } from '@/utils/currency';
+import { useI18n } from '@/utils/i18n';
 
 type SortOption = 'next-payment' | 'price' | 'name';
 
-const SORT_OPTIONS: { label: string; value: SortOption }[] = [
-  { label: 'Next payment', value: 'next-payment' },
-  { label: 'Price', value: 'price' },
-  { label: 'Name', value: 'name' },
-];
-
-const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-function formatCurrency(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
-
-function formatDate(value: string) {
+function formatDate(value: string, locale: string) {
   const date = parseIsoDate(value);
 
   if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -83,15 +66,15 @@ function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
-function formatMonthYear(date: Date) {
-  return new Intl.DateTimeFormat('en-US', {
+function formatMonthYear(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     month: 'long',
     year: 'numeric',
   }).format(date);
 }
 
-function formatSelectedDate(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
+function formatSelectedDate(value: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -128,7 +111,12 @@ function chunkIntoWeeks(days: (Date | null)[]) {
   return weeks;
 }
 
-function sortSubscriptions(subscriptions: Subscription[], sortBy: SortOption) {
+function sortSubscriptions(
+  subscriptions: Subscription[],
+  sortBy: SortOption,
+  displayCurrency: AppCurrencyCode,
+  exchangeRates: ExchangeRates
+) {
   const sorted = [...subscriptions];
 
   if (sortBy === 'name') {
@@ -136,7 +124,11 @@ function sortSubscriptions(subscriptions: Subscription[], sortBy: SortOption) {
   }
 
   if (sortBy === 'price') {
-    return sorted.sort((left, right) => right.price - left.price);
+    return sorted.sort(
+      (left, right) =>
+        convertCurrency(right.price, right.currency, displayCurrency, exchangeRates) -
+        convertCurrency(left.price, left.currency, displayCurrency, exchangeRates)
+    );
   }
 
   return sorted.sort(
@@ -148,7 +140,10 @@ function sortSubscriptions(subscriptions: Subscription[], sortBy: SortOption) {
 export default function SubscriptionsScreen() {
   const router = useRouter();
   const { view } = useLocalSearchParams<{ view?: string }>();
+  const { locale, t } = useI18n();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
+  const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
+  const exchangeRates = usePreferencesStore((state) => state.exchangeRates);
   const [sortBy, setSortBy] = useState<SortOption>('next-payment');
   const [visibleMonth, setVisibleMonth] = useState(() => getMonthStart(startOfToday()));
   const tintColor = useThemeColor({}, 'tint');
@@ -160,15 +155,20 @@ export default function SubscriptionsScreen() {
   const tintMuted = useThemeColor({}, 'tintMuted');
 
   const defaultSelectedDate = useMemo(() => {
-    const sortedByBillingDate = sortSubscriptions(subscriptions, 'next-payment');
+    const sortedByBillingDate = sortSubscriptions(
+      subscriptions,
+      'next-payment',
+      displayCurrency,
+      exchangeRates
+    );
 
     return sortedByBillingDate[0]?.nextBillingDate ?? toIsoDate(startOfToday());
-  }, [subscriptions]);
+  }, [displayCurrency, exchangeRates, subscriptions]);
   const [selectedDate, setSelectedDate] = useState(defaultSelectedDate);
 
   const sortedSubscriptions = useMemo(
-    () => sortSubscriptions(subscriptions, sortBy),
-    [subscriptions, sortBy]
+    () => sortSubscriptions(subscriptions, sortBy, displayCurrency, exchangeRates),
+    [displayCurrency, exchangeRates, subscriptions, sortBy]
   );
 
   const calendarDays = useMemo(() => getCalendarDays(visibleMonth), [visibleMonth]);
@@ -192,6 +192,16 @@ export default function SubscriptionsScreen() {
   }, [selectedDate, sortedSubscriptions]);
 
   const isCalendarView = view === 'calendar';
+  const sortOptions: { label: string; value: SortOption }[] = [
+    { label: t('sortNextPayment'), value: 'next-payment' },
+    { label: t('sortPrice'), value: 'price' },
+    { label: t('sortName'), value: 'name' },
+  ];
+  const weekdayLabels = Array.from({ length: 7 }, (_, index) => {
+    const baseSunday = new Date(2024, 0, 7 + index);
+
+    return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(baseSunday);
+  });
 
   useEffect(() => {
     setSelectedDate((currentDate) => currentDate || defaultSelectedDate);
@@ -210,7 +220,7 @@ export default function SubscriptionsScreen() {
           <View style={styles.calendarHeader}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Show previous month"
+              accessibilityLabel={t('back')}
               onPress={() => setVisibleMonth((currentMonth) => addMonths(currentMonth, -1))}
               style={({ pressed }) => [
                 styles.calendarNavButton,
@@ -219,11 +229,11 @@ export default function SubscriptionsScreen() {
               <Ionicons name="chevron-back" size={18} color={tintColor} />
             </Pressable>
             <ThemedText style={styles.calendarMonthLabel}>
-              {formatMonthYear(visibleMonth)}
+              {formatMonthYear(visibleMonth, locale)}
             </ThemedText>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Show next month"
+              accessibilityLabel={t('continue')}
               onPress={() => setVisibleMonth((currentMonth) => addMonths(currentMonth, 1))}
               style={({ pressed }) => [
                 styles.calendarNavButton,
@@ -234,7 +244,7 @@ export default function SubscriptionsScreen() {
           </View>
 
           <View style={styles.weekdaysRow}>
-            {WEEKDAY_LABELS.map((label) => (
+            {weekdayLabels.map((label) => (
               <View key={label} style={styles.weekdayCell}>
                 <ThemedText style={[styles.weekdayLabel, { color: textSecondary }]}>
                   {label}
@@ -314,9 +324,9 @@ export default function SubscriptionsScreen() {
       ) : null}
 
       <View style={styles.sortSection}>
-        <ThemedText style={styles.sortLabel}>Sort by</ThemedText>
+        <ThemedText style={styles.sortLabel}>{t('sortBy')}</ThemedText>
         <View style={styles.sortRow}>
-          {SORT_OPTIONS.map((option) => {
+          {sortOptions.map((option) => {
             const isActive = option.value === sortBy;
 
             return (
@@ -347,14 +357,14 @@ export default function SubscriptionsScreen() {
       {isCalendarView ? (
         <View style={styles.selectedDateHeader}>
           <ThemedText style={styles.selectedDateTitle}>
-            {formatSelectedDate(selectedDate)}
+            {formatSelectedDate(selectedDate, locale)}
           </ThemedText>
           <ThemedText style={[styles.selectedDateSubtitle, { color: textSecondary }]}>
             {selectedDaySubscriptions.length === 0
-              ? 'No billing scheduled on this day.'
-              : `${selectedDaySubscriptions.length} billing item${
-                  selectedDaySubscriptions.length === 1 ? '' : 's'
-                } on this date.`}
+              ? t('noBillingOnDate')
+              : selectedDaySubscriptions.length === 1
+                ? t('oneBillingItemOnDate')
+                : t('billingItemsOnDate', { count: selectedDaySubscriptions.length })}
           </ThemedText>
         </View>
       ) : null}
@@ -363,12 +373,12 @@ export default function SubscriptionsScreen() {
         {(isCalendarView ? selectedDaySubscriptions : sortedSubscriptions).length === 0 ? (
           <Card>
             <ThemedText style={styles.emptyTitle}>
-              {isCalendarView ? 'No billings on this day' : 'No subscriptions yet'}
+              {isCalendarView ? t('noBillingsOnThisDay') : t('noSubscriptionsYet')}
             </ThemedText>
             <ThemedText style={[styles.emptyCopy, { color: textSecondary }]}>
               {isCalendarView
-                ? 'Pick another date to see the subscriptions billed on that day.'
-                : 'Add your first subscription to start tracking renewals and spending.'}
+                ? t('pickAnotherDate')
+                : t('addYourFirstSubscription')}
             </ThemedText>
           </Card>
         ) : (
@@ -376,7 +386,7 @@ export default function SubscriptionsScreen() {
             <ListItem
               key={subscription.id}
               title={subscription.name}
-              subtitle={`Next billing: ${formatDate(subscription.nextBillingDate)}`}
+              subtitle={t('nextBilling', { date: formatDate(subscription.nextBillingDate, locale) })}
               onPress={() =>
                 router.push({
                   pathname: '/subscription/detail',
@@ -394,7 +404,7 @@ export default function SubscriptionsScreen() {
               trailing={
                 <View style={styles.trailing}>
                   <ThemedText style={styles.priceText}>
-                    {formatCurrency(subscription.price, subscription.currency)}
+                    {formatCurrency(subscription.price, subscription.currency, locale)}
                   </ThemedText>
                 </View>
               }

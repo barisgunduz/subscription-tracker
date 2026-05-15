@@ -10,15 +10,45 @@ import { ServiceLogo } from '@/components/ServiceLogo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { Subscription } from '@/types/subscription';
+import {
+  AppCurrencyCode,
+  convertCurrency,
+  ExchangeRates,
+  formatCurrency,
+} from '@/utils/currency';
+import { useI18n } from '@/utils/i18n';
 
-function getNormalizedMonthlyPrice(subscription: Subscription) {
-  return subscription.billingCycle === 'monthly' ? subscription.price : subscription.price / 12;
+function getNormalizedMonthlyPrice(
+  subscription: Subscription,
+  displayCurrency: AppCurrencyCode,
+  exchangeRates: ExchangeRates
+) {
+  const price = convertCurrency(
+    subscription.price,
+    subscription.currency,
+    displayCurrency,
+    exchangeRates
+  );
+
+  return subscription.billingCycle === 'monthly' ? price : price / 12;
 }
 
-function getYearlyProjection(subscription: Subscription) {
-  return subscription.billingCycle === 'monthly' ? subscription.price * 12 : subscription.price;
+function getYearlyProjection(
+  subscription: Subscription,
+  displayCurrency: AppCurrencyCode,
+  exchangeRates: ExchangeRates
+) {
+  const price = convertCurrency(
+    subscription.price,
+    subscription.currency,
+    displayCurrency,
+    exchangeRates
+  );
+
+  return subscription.billingCycle === 'monthly' ? price * 12 : price;
 }
 
 function startOfToday() {
@@ -40,28 +70,16 @@ function getDaysRemaining(nextBillingDate: string) {
   return Math.max(0, Math.ceil(differenceInMs / (1000 * 60 * 60 * 24)));
 }
 
-function formatCurrency(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
-
-function formatDaysRemaining(daysRemaining: number) {
+function formatDaysRemaining(daysRemaining: number, t: ReturnType<typeof useI18n>['t']) {
   if (daysRemaining === 0) {
-    return 'Today';
+    return t('today');
   }
 
   if (daysRemaining === 1) {
-    return '1 day left';
+    return t('oneDayLeft');
   }
 
-  return `${daysRemaining} days left`;
+  return t('daysLeft', { count: daysRemaining });
 }
 
 type MetricCardProps = {
@@ -93,7 +111,10 @@ function MetricCard({ eyebrow, label, value, accent, backgroundColor, icon }: Me
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { locale, t } = useI18n();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
+  const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
+  const exchangeRates = usePreferencesStore((state) => state.exchangeRates);
   const secondaryText = useThemeColor({}, 'textSecondary');
   const mutedTint = useThemeColor({}, 'tintMuted');
   const surfaceSecondary = useThemeColor({}, 'surfaceSecondary');
@@ -110,20 +131,20 @@ export default function HomeScreen() {
   const activeCount = activeSubscriptions.length;
 
   const monthlyTotal = activeSubscriptions.reduce(
-    (total, subscription) => total + getNormalizedMonthlyPrice(subscription),
+    (total, subscription) =>
+      total + getNormalizedMonthlyPrice(subscription, displayCurrency, exchangeRates),
     0
   );
 
   const yearlyProjection = activeSubscriptions.reduce(
-    (total, subscription) => total + getYearlyProjection(subscription),
+    (total, subscription) =>
+      total + getYearlyProjection(subscription, displayCurrency, exchangeRates),
     0
   );
 
   const dueSoonCount = activeSubscriptions.filter(
     (subscription) => getDaysRemaining(subscription.nextBillingDate) <= 7
   ).length;
-
-  const displayCurrency = activeSubscriptions[0]?.currency ?? 'USD';
 
   const upcomingPayments = [...activeSubscriptions]
     .sort(
@@ -134,32 +155,32 @@ export default function HomeScreen() {
 
   const metricCards = [
     {
-      eyebrow: 'Portfolio',
-      label: 'Active subscriptions',
+      eyebrow: t('portfolio'),
+      label: t('activeSubscriptions'),
       value: String(activeCount),
       accent: accentBlue,
       backgroundColor: accentBlueSoft,
       icon: 'layers-outline' as const,
     },
     {
-      eyebrow: 'Monthly',
-      label: 'Recurring spend',
-      value: formatCurrency(monthlyTotal, displayCurrency),
+      eyebrow: t('monthly'),
+      label: t('recurringSpend'),
+      value: formatCurrency(monthlyTotal, displayCurrency, locale),
       accent: accentMint,
       backgroundColor: accentMintSoft,
       icon: 'wallet-outline' as const,
     },
     {
-      eyebrow: 'Yearly',
-      label: 'Projected total',
-      value: formatCurrency(yearlyProjection, displayCurrency),
+      eyebrow: t('yearly'),
+      label: t('projectedTotal'),
+      value: formatCurrency(yearlyProjection, displayCurrency, locale),
       accent: accentPeach,
       backgroundColor: accentPeachSoft,
       icon: 'sparkles-outline' as const,
     },
     {
-      eyebrow: 'Attention',
-      label: 'Due in 7 days',
+      eyebrow: t('attention'),
+      label: t('dueInSevenDays'),
       value: String(dueSoonCount),
       accent: accentGold,
       backgroundColor: accentGoldSoft,
@@ -177,22 +198,22 @@ export default function HomeScreen() {
 
       <View style={styles.sectionHeader}>
         <View style={styles.sectionCopy}>
-          <ThemedText style={styles.sectionTitle}>Upcoming Payments</ThemedText>
+          <ThemedText style={styles.sectionTitle}>{t('upcomingPayments')}</ThemedText>
           <ThemedText style={[styles.sectionDescription, { color: secondaryText }]}>
-            The next five renewals in your lineup.
+            {t('nextFiveRenewals')}
           </ThemedText>
         </View>
         <View style={[styles.sectionBadge, { backgroundColor: accentBlueSoft }]}>
-          <ThemedText style={[styles.sectionBadgeText, { color: accentBlue }]}>Next 5</ThemedText>
+          <ThemedText style={[styles.sectionBadgeText, { color: accentBlue }]}>{t('nextFive')}</ThemedText>
         </View>
       </View>
 
       <View style={styles.list}>
         {upcomingPayments.length === 0 ? (
           <Card style={styles.emptyCard}>
-            <ThemedText style={styles.emptyTitle}>No upcoming payments</ThemedText>
+            <ThemedText style={styles.emptyTitle}>{t('noUpcomingPayments')}</ThemedText>
             <ThemedText style={[styles.emptyCopy, { color: secondaryText }]}>
-              Add subscriptions to see the next renewals here.
+              {t('addSubscriptionsForRenewals')}
             </ThemedText>
           </Card>
         ) : (
@@ -203,7 +224,7 @@ export default function HomeScreen() {
               <ListItem
                 key={subscription.id}
                 title={subscription.name}
-                subtitle={formatDaysRemaining(daysRemaining)}
+                subtitle={formatDaysRemaining(daysRemaining, t)}
                 onPress={() =>
                   router.push({
                     pathname: '/subscription/detail',
@@ -222,11 +243,11 @@ export default function HomeScreen() {
                 trailing={
                   <View style={styles.trailing}>
                     <ThemedText style={styles.priceText}>
-                      {formatCurrency(subscription.price, subscription.currency)}
+                      {formatCurrency(subscription.price, subscription.currency, locale)}
                     </ThemedText>
                     <View style={[styles.dayPill, { backgroundColor: surfaceSecondary }]}>
                       <ThemedText style={[styles.dayPillText, { color: secondaryText }]}>
-                        {daysRemaining === 0 ? 'Due' : `${daysRemaining}d`}
+                        {daysRemaining === 0 ? t('due') : `${daysRemaining}d`}
                       </ThemedText>
                     </View>
                   </View>

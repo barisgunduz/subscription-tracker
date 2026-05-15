@@ -8,28 +8,20 @@ import { ServiceLogo } from '@/components/ServiceLogo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { getCategoryTranslationKey } from '@/utils/categories';
+import { convertCurrency, formatCurrency } from '@/utils/currency';
+import { useI18n } from '@/utils/i18n';
 
-function formatCurrency(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
-
-function formatDate(value: string) {
+function formatDate(value: string, locale: string) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -56,12 +48,15 @@ function DetailRow({ label, value }: DetailRowProps) {
 export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const router = useRouter();
+  const { locale, t } = useI18n();
   const subscriptionId = Array.isArray(id) ? id[0] : id;
 
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const pauseSubscription = useSubscriptionStore((state) => state.pauseSubscription);
   const restartSubscription = useSubscriptionStore((state) => state.restartSubscription);
   const deleteSubscription = useSubscriptionStore((state) => state.deleteSubscription);
+  const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
+  const exchangeRates = usePreferencesStore((state) => state.exchangeRates);
 
   const tintColor = useThemeColor({}, 'tint');
   const textSecondary = useThemeColor({}, 'textSecondary');
@@ -75,12 +70,12 @@ export default function SubscriptionDetailScreen() {
     return (
       <ScreenContainer contentStyle={styles.notFoundContainer}>
         <Card>
-          <ThemedText style={styles.notFoundTitle}>Subscription not found</ThemedText>
+          <ThemedText style={styles.notFoundTitle}>{t('subscriptionNotFound')}</ThemedText>
           <ThemedText style={[styles.notFoundCopy, { color: textSecondary }]}>
-            This item may have been deleted or the link is invalid.
+            {t('subscriptionNotFoundBody')}
           </ThemedText>
           <View style={styles.notFoundAction}>
-            <PrimaryButton onPress={() => router.back()} title="Go Back" />
+            <PrimaryButton onPress={() => router.back()} title={t('goBack')} />
           </View>
         </Card>
       </ScreenContainer>
@@ -88,33 +83,56 @@ export default function SubscriptionDetailScreen() {
   }
 
   const currentSubscription = subscription;
+  const categoryTranslationKey = getCategoryTranslationKey(currentSubscription.category);
+  const originalPrice = formatCurrency(
+    currentSubscription.price,
+    currentSubscription.currency,
+    locale
+  );
+  const displayPrice = formatCurrency(
+    convertCurrency(
+      currentSubscription.price,
+      currentSubscription.currency,
+      displayCurrency,
+      exchangeRates
+    ),
+    displayCurrency,
+    locale
+  );
+  const savedRates = currentSubscription.exchangeRatesAtCreation;
+  const savedRatesSummary = savedRates
+    ? t('exchangeRatesSummary', {
+        eur: savedRates.EUR.toFixed(4),
+        try: savedRates.TRY.toFixed(4),
+      })
+    : t('noneYet');
 
   function handlePause() {
     if (currentSubscription.status === 'paused') {
-      Alert.alert('Restart subscription', `Restart ${currentSubscription.name} today?`, [
-        { text: 'Cancel', style: 'cancel' },
+      Alert.alert(t('restartSubscription'), t('restartSubscriptionBody', { name: currentSubscription.name }), [
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Restart',
+          text: t('restart'),
           onPress: () => restartSubscription(currentSubscription.id),
         },
       ]);
       return;
     }
 
-    Alert.alert('Pause subscription', `Pause ${currentSubscription.name}?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('pauseSubscription'), t('pauseSubscriptionBody', { name: currentSubscription.name }), [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Pause',
+        text: t('pause'),
         onPress: () => pauseSubscription(currentSubscription.id),
       },
     ]);
   }
 
   function handleDelete() {
-    Alert.alert('Delete subscription', `Delete ${currentSubscription.name}? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('deleteSubscription'), t('deleteSubscriptionBody', { name: currentSubscription.name }), [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('delete'),
         style: 'destructive',
         onPress: () => {
           deleteSubscription(currentSubscription.id);
@@ -144,12 +162,11 @@ export default function SubscriptionDetailScreen() {
         <View style={styles.heroCopy}>
           <ThemedText style={styles.title}>{currentSubscription.name}</ThemedText>
           <ThemedText style={[styles.heroMeta, { color: textSecondary }]}>
-            {formatCurrency(currentSubscription.price, currentSubscription.currency)} ·{' '}
-            {currentSubscription.billingCycle === 'monthly' ? 'Monthly' : 'Yearly'}
+            {originalPrice} · {currentSubscription.billingCycle === 'monthly' ? t('monthly') : t('yearly')}
           </ThemedText>
           <View style={[styles.statusPill, { backgroundColor: surfaceSecondary, borderColor }]}>
             <ThemedText style={[styles.statusText, { color: tintColor }]}>
-              {currentSubscription.status}
+              {currentSubscription.status === 'active' ? t('active') : t('pause')}
             </ThemedText>
           </View>
         </View>
@@ -157,31 +174,40 @@ export default function SubscriptionDetailScreen() {
 
       <Card padded={false}>
         <DetailRow
-          label="Price"
-          value={formatCurrency(currentSubscription.price, currentSubscription.currency)}
+          label={t('price')}
+          value={originalPrice}
+        />
+        <DetailRow label={t('displayValue')} value={displayPrice} />
+        <DetailRow
+          label={t('exchangeRateDateLabel')}
+          value={currentSubscription.exchangeRatesDate ?? t('noneYet')}
+        />
+        <DetailRow label={t('exchangeRates')} value={savedRatesSummary} />
+        <DetailRow
+          label={t('billingCycle')}
+          value={currentSubscription.billingCycle === 'monthly' ? t('monthly') : t('yearly')}
+        />
+        <DetailRow label={t('billingDay')} value={String(currentSubscription.billingDay)} />
+        <DetailRow label={t('startDate')} value={formatDate(currentSubscription.startDate, locale)} />
+        <DetailRow label={t('renewalDate')} value={formatDate(currentSubscription.renewalDate, locale)} />
+        <DetailRow
+          label={t('nextBillingDate')}
+          value={formatDate(currentSubscription.nextBillingDate, locale)}
         />
         <DetailRow
-          label="Billing Cycle"
-          value={currentSubscription.billingCycle === 'monthly' ? 'Monthly' : 'Yearly'}
+          label={t('category')}
+          value={categoryTranslationKey ? t(categoryTranslationKey) : currentSubscription.category}
         />
-        <DetailRow label="Billing Day" value={String(currentSubscription.billingDay)} />
-        <DetailRow label="Start Date" value={formatDate(currentSubscription.startDate)} />
-        <DetailRow label="Renewal Date" value={formatDate(currentSubscription.renewalDate)} />
-        <DetailRow
-          label="Next Billing Date"
-          value={formatDate(currentSubscription.nextBillingDate)}
-        />
-        <DetailRow label="Category" value={currentSubscription.category} />
         <View style={styles.notesRow}>
-          <ThemedText style={[styles.detailLabel, { color: textSecondary }]}>Notes</ThemedText>
+          <ThemedText style={[styles.detailLabel, { color: textSecondary }]}>{t('notes')}</ThemedText>
           <ThemedText style={styles.notesValue}>
-            {currentSubscription.notes.trim() ? currentSubscription.notes : 'No notes'}
+            {currentSubscription.notes.trim() ? currentSubscription.notes : t('noNotes')}
           </ThemedText>
         </View>
       </Card>
 
       <View style={styles.actions}>
-        <PrimaryButton onPress={handleEdit} title="Edit" />
+        <PrimaryButton onPress={handleEdit} title={t('edit')} />
 
         <Pressable
           accessibilityRole="button"
@@ -195,7 +221,7 @@ export default function SubscriptionDetailScreen() {
             },
           ]}>
           <ThemedText style={styles.secondaryActionText}>
-            {currentSubscription.status === 'paused' ? 'Renew' : 'Pause'}
+            {currentSubscription.status === 'paused' ? t('restart') : t('pause')}
           </ThemedText>
         </Pressable>
 
@@ -209,7 +235,7 @@ export default function SubscriptionDetailScreen() {
               opacity: pressed ? 0.88 : 1,
             },
           ]}>
-          <ThemedText style={[styles.dangerActionText, { color: dangerColor }]}>Delete</ThemedText>
+          <ThemedText style={[styles.dangerActionText, { color: dangerColor }]}>{t('delete')}</ThemedText>
         </Pressable>
       </View>
     </ScreenContainer>

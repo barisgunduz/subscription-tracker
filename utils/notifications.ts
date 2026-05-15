@@ -1,7 +1,9 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { Subscription } from '@/types/subscription';
+import { translate, TranslationKey } from '@/utils/i18n';
 
 const CHANNEL_ID = 'billing-reminders';
 
@@ -35,6 +37,9 @@ function getDaysRemaining(nextBillingDate: string) {
 }
 
 function buildReminderCopy(subscriptions: Subscription[]) {
+  const languageCode = usePreferencesStore.getState().languageCode;
+  const t = (key: TranslationKey, params?: Record<string, string | number>) =>
+    translate(languageCode, key, params);
   const activeSubscriptions = subscriptions.filter((subscription) => subscription.status === 'active');
   const dueToday = activeSubscriptions.filter(
     (subscription) => getDaysRemaining(subscription.nextBillingDate) === 0
@@ -46,11 +51,10 @@ function buildReminderCopy(subscriptions: Subscription[]) {
 
   if (dueToday.length > 0) {
     const leadName = dueToday[0]?.name;
-    const suffix = dueToday.length > 1 ? ` and ${dueToday.length - 1} more` : '';
 
     return {
-      title: 'Renewals due today',
-      body: `${leadName}${suffix} ${dueToday.length > 1 ? 'are' : 'is'} ready for review today.`,
+      title: t('upcomingPayments'),
+      body: `${leadName} ${t('due')}`,
     };
   }
 
@@ -62,17 +66,17 @@ function buildReminderCopy(subscriptions: Subscription[]) {
     const days = getDaysRemaining(soonest.nextBillingDate);
 
     return {
-      title: 'Upcoming billing reminder',
-      body: `${soonest.name} renews in ${days} day${days === 1 ? '' : 's'}. Check your upcoming payments.`,
+      title: t('upcomingPayments'),
+      body: `${soonest.name}: ${days === 1 ? t('oneDayLeft') : t('daysLeft', { count: days })}`,
     };
   }
 
   return {
-    title: 'Subscription check-in',
+    title: t('subscriptions'),
     body:
       activeSubscriptions.length > 0
-        ? `You have ${activeSubscriptions.length} active subscriptions. Take a quick look at your spending today.`
-        : 'Add your first subscription to start getting reminder insights.',
+        ? t('activeSubscriptionsCount', { count: activeSubscriptions.length })
+        : t('addYourFirstSubscription'),
   };
 }
 
@@ -82,7 +86,7 @@ async function ensureChannelAsync() {
   }
 
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-    name: 'Billing reminders',
+    name: 'Substrack',
     importance: Notifications.AndroidImportance.DEFAULT,
     sound: 'default',
     vibrationPattern: [0, 150, 80, 150],
@@ -130,7 +134,7 @@ export async function syncBillingNotificationsAsync(subscriptions: Subscription[
     trigger:
       Platform.OS === 'android'
         ? {
-            type: 'daily',
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
             hour: 9,
             minute: 0,
             channelId: CHANNEL_ID,

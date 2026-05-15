@@ -10,30 +10,33 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { setHasCompletedOnboarding } from '@/utils/onboarding';
+import { TranslationKey, useI18n } from '@/utils/i18n';
 
-const ONBOARDING_STEPS = [
+const ONBOARDING_STEPS: {
+  titleKey: TranslationKey;
+  descriptionKey: TranslationKey;
+  icon: 'wallet-outline' | 'calendar-clear-outline' | 'stats-chart-outline';
+}[] = [
   {
-    title: 'Track your subscriptions',
-    description:
-      'Keep every recurring service in one place so renewals, prices, and billing dates stay visible.',
+    titleKey: 'trackSubscriptionsTitle',
+    descriptionKey: 'trackSubscriptionsBody',
     icon: 'wallet-outline' as const,
   },
   {
-    title: 'See upcoming payments',
-    description:
-      'Scan what is due next and understand which subscriptions are landing soon on your calendar.',
+    titleKey: 'upcomingPaymentsTitle',
+    descriptionKey: 'upcomingPaymentsBody',
     icon: 'calendar-clear-outline' as const,
   },
   {
-    title: 'Control your spending',
-    description:
-      'Spot recurring costs early and make cleaner decisions about what stays, pauses, or gets cancelled.',
+    titleKey: 'controlSpendingTitle',
+    descriptionKey: 'controlSpendingBody',
     icon: 'stats-chart-outline' as const,
   },
 ];
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { t } = useI18n();
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const tintColor = useThemeColor({}, 'tint');
@@ -79,7 +82,7 @@ export default function OnboardingScreen() {
 
               return (
                 <View
-                  key={item.title}
+                  key={item.titleKey}
                   style={[
                     styles.progressDot,
                     {
@@ -94,7 +97,7 @@ export default function OnboardingScreen() {
 
           {!isLastStep ? (
             <ThemedText style={[styles.skipText, { color: textSecondary }]} onPress={handleComplete}>
-              Skip
+              {t('skip')}
             </ThemedText>
           ) : null}
         </View>
@@ -106,11 +109,11 @@ export default function OnboardingScreen() {
 
           <View style={styles.copyBlock}>
             <ThemedText style={styles.eyebrow}>
-              Step {activeStep + 1} of {ONBOARDING_STEPS.length}
+              {t('stepProgress', { current: activeStep + 1, total: ONBOARDING_STEPS.length })}
             </ThemedText>
-            <ThemedText style={styles.title}>{step.title}</ThemedText>
+            <ThemedText style={styles.title}>{t(step.titleKey)}</ThemedText>
             <ThemedText style={[styles.description, { color: textSecondary }]}>
-              {step.description}
+              {t(step.descriptionKey)}
             </ThemedText>
           </View>
         </Card>
@@ -121,14 +124,14 @@ export default function OnboardingScreen() {
           <ThemedText
             style={[styles.secondaryAction, { color: textSecondary }]}
             onPress={() => setActiveStep((currentStep) => Math.max(0, currentStep - 1))}>
-            Back
+            {t('back')}
           </ThemedText>
         ) : (
           <View />
         )}
 
         <PrimaryButton
-          title={isLastStep ? 'Open app' : 'Continue'}
+          title={isLastStep ? t('openApp') : t('continue')}
           onPress={handleNext}
           disabled={isSubmitting}
           style={styles.primaryAction}
