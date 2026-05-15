@@ -169,13 +169,6 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.title}>Dashboard</ThemedText>
-        <ThemedText style={[styles.subtitle, { color: secondaryText }]}>
-          A calm snapshot of your subscriptions, renewals, and monthly rhythm.
-        </ThemedText>
-      </View>
-
       <View style={styles.metricsGrid}>
         {metricCards.map((card) => (
           <MetricCard key={card.label} {...card} />
@@ -252,16 +245,6 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: 120,
     gap: Spacing.xl,
-  },
-  header: {
-    gap: Spacing.xs,
-  },
-  title: {
-    ...Typography.largeTitle,
-  },
-  subtitle: {
-    ...Typography.callout,
-    maxWidth: 320,
   },
   metricsGrid: {
     flexDirection: 'row',

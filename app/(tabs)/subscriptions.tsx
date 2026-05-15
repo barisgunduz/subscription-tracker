@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { Card } from '@/components/Card';
 import { ListItem } from '@/components/ListItem';
@@ -14,7 +14,6 @@ import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { Subscription } from '@/types/subscription';
 
 type SortOption = 'next-payment' | 'price' | 'name';
-type ViewMode = 'list' | 'calendar';
 
 const SORT_OPTIONS: { label: string; value: SortOption }[] = [
   { label: 'Next payment', value: 'next-payment' },
@@ -148,9 +147,9 @@ function sortSubscriptions(subscriptions: Subscription[], sortBy: SortOption) {
 
 export default function SubscriptionsScreen() {
   const router = useRouter();
+  const { view } = useLocalSearchParams<{ view?: string }>();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const [sortBy, setSortBy] = useState<SortOption>('next-payment');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [visibleMonth, setVisibleMonth] = useState(() => getMonthStart(startOfToday()));
   const tintColor = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
@@ -192,55 +191,20 @@ export default function SubscriptionsScreen() {
     return sortedSubscriptions.filter((subscription) => subscription.nextBillingDate === selectedDate);
   }, [selectedDate, sortedSubscriptions]);
 
-  const isCalendarView = viewMode === 'calendar';
+  const isCalendarView = view === 'calendar';
 
   useEffect(() => {
     setSelectedDate((currentDate) => currentDate || defaultSelectedDate);
   }, [defaultSelectedDate]);
 
-  const handleToggleView = () => {
-    setViewMode((currentView) => {
-      const nextView = currentView === 'list' ? 'calendar' : 'list';
-
-      if (nextView === 'calendar') {
-        setVisibleMonth(getMonthStart(parseIsoDate(selectedDate)));
-      }
-
-      return nextView;
-    });
-  };
+  useEffect(() => {
+    if (isCalendarView) {
+      setVisibleMonth(getMonthStart(parseIsoDate(selectedDate)));
+    }
+  }, [isCalendarView, selectedDate]);
 
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerTopRow}>
-          <ThemedText style={styles.title}>Subscriptions</ThemedText>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              isCalendarView ? 'Switch to subscriptions list view' : 'Switch to calendar view'
-            }
-            onPress={handleToggleView}
-            style={({ pressed }) => [
-              styles.calendarToggle,
-              {
-                backgroundColor: isCalendarView ? tintColor : surfaceSecondary,
-                borderColor: isCalendarView ? tintColor : borderColor,
-                opacity: pressed ? 0.82 : 1,
-              },
-            ]}>
-            <Ionicons
-              name={isCalendarView ? 'list-outline' : 'calendar-outline'}
-              size={18}
-              color={isCalendarView ? '#FFFFFF' : tintColor}
-            />
-          </Pressable>
-        </View>
-        <ThemedText style={[styles.subtitle, { color: textSecondary }]}>
-          All recurring services in one place.
-        </ThemedText>
-      </View>
-
       {isCalendarView ? (
         <Card style={styles.calendarCard}>
           <View style={styles.calendarHeader}>
@@ -447,31 +411,6 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: 120,
     gap: Spacing.lg,
-  },
-  header: {
-    gap: Spacing.xs,
-  },
-  headerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-  },
-  title: {
-    ...Typography.largeTitle,
-    flex: 1,
-  },
-  subtitle: {
-    ...Typography.callout,
-  },
-  calendarToggle: {
-    width: 42,
-    height: 42,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-end',
   },
   calendarCard: {
     gap: Spacing.md,

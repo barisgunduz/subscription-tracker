@@ -111,13 +111,6 @@ export default function EditSubscriptionScreen() {
 
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.title}>Edit Subscription</ThemedText>
-        <ThemedText style={[styles.subtitle, { color: textSecondary }]}>
-          Update billing details and notes for {subscription.name}.
-        </ThemedText>
-      </View>
-
       <Card>
         <ThemedText style={styles.sectionTitle}>{subscription.name}</ThemedText>
         <ThemedText style={[styles.sectionMeta, { color: textSecondary }]}>
@@ -266,15 +259,6 @@ const styles = StyleSheet.create({
   },
   notFoundAction: {
     marginTop: Spacing.md,
-  },
-  header: {
-    gap: Spacing.xs,
-  },
-  title: {
-    ...Typography.largeTitle,
-  },
-  subtitle: {
-    ...Typography.callout,
   },
   sectionTitle: {
     ...Typography.title2,

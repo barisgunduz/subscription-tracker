@@ -152,13 +152,6 @@ export default function AddSubscriptionScreen() {
 
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.title}>Add Subscription</ThemedText>
-        <ThemedText style={[styles.subtitle, { color: textSecondary }]}>
-          Choose a default service or create a custom one.
-        </ThemedText>
-      </View>
-
       <Card>
         <ThemedText style={styles.sectionTitle}>Service Type</ThemedText>
         <View style={styles.chipRow}>
@@ -407,15 +400,6 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: 32,
     gap: Spacing.lg,
-  },
-  header: {
-    gap: Spacing.xs,
-  },
-  title: {
-    ...Typography.largeTitle,
-  },
-  subtitle: {
-    ...Typography.callout,
   },
   sectionTitle: {
     ...Typography.title2,

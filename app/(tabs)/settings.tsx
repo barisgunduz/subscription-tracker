@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
 import Constants from 'expo-constants';
 
 import { Card } from '@/components/Card';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing, Typography } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
@@ -65,6 +66,7 @@ function SettingsRow({
 }
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const clearAllSubscriptions = useSubscriptionStore((state) => state.clearAllSubscriptions);
   const notificationsEnabled = usePreferencesStore((state) => state.notificationsEnabled);
@@ -72,8 +74,6 @@ export default function SettingsScreen() {
 
   const tintColor = useThemeColor({}, 'tint');
   const surfaceSecondary = useThemeColor({}, 'surfaceSecondary');
-  const textSecondary = useThemeColor({}, 'textSecondary');
-  const dangerColor = useThemeColor({}, 'danger');
   const [isUpdatingNotifications, setIsUpdatingNotifications] = useState(false);
 
   const appVersion =
@@ -162,13 +162,6 @@ export default function SettingsScreen() {
 
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.title}>Settings</ThemedText>
-        <ThemedText style={[styles.subtitle, { color: textSecondary }]}>
-          App preferences, data controls, and future account settings.
-        </ThemedText>
-      </View>
-
       <Card padded={false}>
         <SettingsRow label="App Version" value={appVersion} />
         <SettingsRow
@@ -194,24 +187,21 @@ export default function SettingsScreen() {
           onPress={handleExportData}
         />
         <SettingsRow
+          label="Support"
+          value="Help, app info, and contact"
+          onPress={() => router.push('/support')}
+        />
+        <SettingsRow
+          label="Privacy Policy"
+          value="How your data is handled"
+          onPress={() => router.push('/privacy-policy')}
+        />
+        <SettingsRow
           destructive
           label="Clear All Subscriptions"
           onPress={handleClearAll}
           showBorder={false}
         />
-      </Card>
-
-      <View style={styles.sectionHeader}>
-        <ThemedText style={styles.sectionTitle}>Future</ThemedText>
-        <View style={[styles.futureBadge, { backgroundColor: surfaceSecondary }]}>
-          <ThemedText style={[styles.futureBadgeText, { color: dangerColor }]}>Placeholder</ThemedText>
-        </View>
-      </View>
-
-      <Card padded={false}>
-        <SettingsRow label="Account" value="Coming soon" />
-        <SettingsRow label="Email" value="Coming soon" />
-        <SettingsRow label="Password" value="Coming soon" showBorder={false} />
       </Card>
     </ScreenContainer>
   );
@@ -221,15 +211,6 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: 120,
     gap: Spacing.lg,
-  },
-  header: {
-    gap: Spacing.xs,
-  },
-  title: {
-    ...Typography.largeTitle,
-  },
-  subtitle: {
-    ...Typography.callout,
   },
   row: {
     minHeight: 68,
@@ -249,24 +230,5 @@ const styles = StyleSheet.create({
   },
   rowValue: {
     ...Typography.footnote,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-  },
-  sectionTitle: {
-    ...Typography.title2,
-  },
-  futureBadge: {
-    minHeight: 30,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  futureBadgeText: {
-    ...Typography.caption,
   },
 });

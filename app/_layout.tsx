@@ -31,6 +31,14 @@ export default function RootLayout() {
           name="subscription/edit"
           options={{ presentation: 'modal', title: 'Edit Subscription' }}
         />
+        <Stack.Screen
+          name="privacy-policy"
+          options={{ title: 'Privacy Policy', headerBackTitle: 'Settings' }}
+        />
+        <Stack.Screen
+          name="support"
+          options={{ title: 'Support', headerBackTitle: 'Settings' }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

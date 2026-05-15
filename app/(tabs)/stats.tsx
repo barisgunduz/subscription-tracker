@@ -168,13 +168,6 @@ export default function StatsScreen() {
 
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.title}>Stats</ThemedText>
-        <ThemedText style={[styles.subtitle, { color: textSecondary }]}>
-          Understand where your subscription budget goes and which categories are carrying the load.
-        </ThemedText>
-      </View>
-
       <Card style={[styles.heroCard, { backgroundColor: accentMintSoft, borderColor: accentMintSoft }]}>
         <View style={styles.heroTopRow}>
           <View>
@@ -288,16 +281,6 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: 120,
     gap: Spacing.xl,
-  },
-  header: {
-    gap: Spacing.xs,
-  },
-  title: {
-    ...Typography.largeTitle,
-  },
-  subtitle: {
-    ...Typography.callout,
-    maxWidth: 330,
   },
   heroCard: {
     gap: Spacing.md,
