@@ -1,7 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs, useGlobalSearchParams, usePathname, useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { FloatingButton } from '@/components/FloatingButton';
 import { HapticTab } from '@/components/haptic-tab';
@@ -27,6 +27,9 @@ export default function TabLayout() {
           tabBarActiveTintColor: palette.tint,
           tabBarInactiveTintColor: palette.tabIconDefault,
           tabBarButton: HapticTab,
+          tabBarIconStyle: styles.tabBarIcon,
+          tabBarItemStyle: styles.tabBarItem,
+          tabBarLabelStyle: styles.tabBarLabel,
           tabBarStyle: [
             styles.tabBar,
             {
@@ -105,8 +108,18 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     height: 72,
-    paddingBottom: 12,
-    paddingTop: 10,
+    paddingBottom: 8,
+    paddingTop: 0,
+  },
+  tabBarItem: {
+    paddingVertical: 0,
+  },
+  tabBarIcon: {
+    marginTop: -4,
+  },
+  tabBarLabel: {
+    marginTop: -2,
+    marginBottom: 6,
   },
   fab: {
     right: Spacing.md,

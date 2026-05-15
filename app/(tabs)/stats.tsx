@@ -1,6 +1,6 @@
-import { ComponentProps } from 'react';
+import { ComponentProps, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/Card';
 import { ScreenContainer } from '@/components/ScreenContainer';
@@ -33,6 +33,16 @@ const CATEGORY_ORDER = [
   'Other',
 ] as const;
 
+type PeriodFilter = '1m' | '3m' | '12m';
+
+const PERIOD_MONTHS: Record<PeriodFilter, number> = {
+  '1m': 1,
+  '3m': 3,
+  '12m': 12,
+};
+
+const CHART_COLORS = ['#2F80ED', '#27AE60', '#F2994A', '#9B51E0', '#EB5757', '#00A3A3'];
+
 function getNormalizedMonthlyPrice(
   subscription: Subscription,
   displayCurrency: AppCurrencyCode,
@@ -63,6 +73,69 @@ function getYearlyProjection(
   return subscription.billingCycle === 'monthly' ? price * 12 : price;
 }
 
+function parseIsoDate(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return new Date(value);
+  }
+
+  const [, year, month, day] = match;
+
+  return new Date(Number(year), Number(month) - 1, Number(day));
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addMonths(date: Date, amount: number) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function isSameMonth(left: Date, right: Date) {
+  return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth();
+}
+
+function countRenewalsInPeriod(subscription: Subscription, startDate: Date, months: number) {
+  const endDate = addMonths(startDate, months);
+  let currentDate = parseIsoDate(subscription.nextBillingDate);
+  let count = 0;
+
+  while (currentDate < endDate) {
+    if (currentDate >= startDate) {
+      count += 1;
+    }
+
+    currentDate =
+      subscription.billingCycle === 'monthly'
+        ? new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate())
+        : new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), currentDate.getDate());
+  }
+
+  return count;
+}
+
+function countRenewalsInMonth(subscription: Subscription, month: Date) {
+  const monthStart = startOfMonth(month);
+  const monthEnd = addMonths(monthStart, 1);
+  let currentDate = parseIsoDate(subscription.nextBillingDate);
+  let count = 0;
+
+  while (currentDate < monthEnd) {
+    if (currentDate >= monthStart && isSameMonth(currentDate, monthStart)) {
+      count += 1;
+    }
+
+    currentDate =
+      subscription.billingCycle === 'monthly'
+        ? new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate())
+        : new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), currentDate.getDate());
+  }
+
+  return count;
+}
+
 type InsightCardProps = {
   label: string;
   value: string;
@@ -89,12 +162,15 @@ function InsightCard({ label, value, meta, icon, accent, backgroundColor }: Insi
 
 export default function StatsScreen() {
   const { locale, t } = useI18n();
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('3m');
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
   const exchangeRates = usePreferencesStore((state) => state.exchangeRates);
   const textSecondary = useThemeColor({}, 'textSecondary');
   const dividerColor = useThemeColor({}, 'divider');
   const surfaceSecondary = useThemeColor({}, 'surfaceSecondary');
+  const borderColor = useThemeColor({}, 'border');
+  const tintColor = useThemeColor({}, 'tint');
   const accentBlue = useThemeColor({}, 'accentBlue');
   const accentBlueSoft = useThemeColor({}, 'accentBlueSoft');
   const accentMint = useThemeColor({}, 'accentMint');
@@ -105,6 +181,8 @@ export default function StatsScreen() {
   const accentGoldSoft = useThemeColor({}, 'accentGoldSoft');
 
   const activeSubscriptions = subscriptions.filter((subscription) => subscription.status === 'active');
+  const periodMonths = PERIOD_MONTHS[periodFilter];
+  const periodStart = useMemo(() => new Date(), []);
 
   const monthlyTotal = activeSubscriptions.reduce(
     (total, subscription) =>
@@ -117,9 +195,6 @@ export default function StatsScreen() {
       total + getYearlyProjection(subscription, displayCurrency, exchangeRates),
     0
   );
-
-  const averageSubscriptionCost =
-    activeSubscriptions.length > 0 ? monthlyTotal / activeSubscriptions.length : 0;
 
   const categoryBreakdown = CATEGORY_ORDER.map((category) => {
     const matchingSubscriptions = activeSubscriptions.filter((subscription) => {
@@ -155,19 +230,74 @@ export default function StatsScreen() {
     return key ? t(key) : category;
   };
 
+  const projectedSpend = activeSubscriptions.reduce((total, subscription) => {
+    const convertedPrice = convertCurrency(
+      subscription.price,
+      subscription.currency,
+      displayCurrency,
+      exchangeRates
+    );
+    const renewalCount = countRenewalsInPeriod(subscription, periodStart, periodMonths);
+
+    return total + convertedPrice * renewalCount;
+  }, 0);
+
+  const periodRenewalCount = activeSubscriptions.reduce(
+    (total, subscription) => total + countRenewalsInPeriod(subscription, periodStart, periodMonths),
+    0
+  );
+
+  const monthlyForecast = Array.from({ length: 6 }, (_, index) => {
+    const month = addMonths(startOfMonth(periodStart), index);
+    const spend = activeSubscriptions.reduce((total, subscription) => {
+      const renewalCount = countRenewalsInMonth(subscription, month);
+      const convertedPrice = convertCurrency(
+        subscription.price,
+        subscription.currency,
+        displayCurrency,
+        exchangeRates
+      );
+
+      return total + convertedPrice * renewalCount;
+    }, 0);
+
+    return {
+      label: new Intl.DateTimeFormat(locale, { month: 'short' }).format(month),
+      year: new Intl.DateTimeFormat(locale, { year: '2-digit' }).format(month),
+      spend,
+    };
+  });
+  const maxForecastSpend = Math.max(...monthlyForecast.map((item) => item.spend), 1);
+  const maxCategorySpend = Math.max(...categoryBreakdown.map((item) => item.monthlySpend), 1);
+  const topSubscriptions = [...activeSubscriptions]
+    .map((subscription) => ({
+      id: subscription.id,
+      name: subscription.name,
+      monthlySpend: getNormalizedMonthlyPrice(subscription, displayCurrency, exchangeRates),
+    }))
+    .sort((left, right) => right.monthlySpend - left.monthlySpend)
+    .slice(0, 5);
+  const maxSubscriptionSpend = Math.max(...topSubscriptions.map((item) => item.monthlySpend), 1);
+
+  const periodOptions: { label: string; value: PeriodFilter }[] = [
+    { label: t('nextMonth'), value: '1m' },
+    { label: t('nextQuarter'), value: '3m' },
+    { label: t('nextYear'), value: '12m' },
+  ];
+
   const insightCards = [
     {
-      label: t('activeSubscriptions'),
-      value: String(activeSubscriptions.length),
-      meta: topCategory ? t('topCategoryLeads', { category: translateCategory(topCategory.category) }) : t('noActivePlans'),
+      label: t('projectedSpend'),
+      value: formatCurrency(projectedSpend, displayCurrency, locale),
+      meta: periodOptions.find((option) => option.value === periodFilter)?.label ?? t('nextQuarter'),
       icon: 'layers-outline' as const,
       accent: accentBlue,
       backgroundColor: accentBlueSoft,
     },
     {
-      label: t('averageMonthlyCost'),
-      value: formatCurrency(averageSubscriptionCost, displayCurrency, locale),
-      meta: activeSubscriptions.length > 0 ? t('perActiveSubscription') : t('addPlanToCompare'),
+      label: t('renewalCount'),
+      value: String(periodRenewalCount),
+      meta: activeSubscriptions.length > 0 ? t('acrossActiveSubscriptions', { count: activeSubscriptions.length }) : t('addPlanToCompare'),
       icon: 'wallet-outline' as const,
       accent: accentMint,
       backgroundColor: accentMintSoft,
@@ -197,40 +327,36 @@ export default function StatsScreen() {
 
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
-      <Card style={[styles.heroCard, { backgroundColor: accentMintSoft, borderColor: accentMintSoft }]}>
-        <View style={styles.heroTopRow}>
-          <View>
-            <ThemedText style={[styles.heroEyebrow, { color: accentMint }]}>{t('monthlySpend')}</ThemedText>
-            <ThemedText style={styles.heroValue}>
-              {formatCurrency(monthlyTotal, displayCurrency, locale)}
-            </ThemedText>
-          </View>
-          <View style={[styles.heroIconWrap, { backgroundColor: accentMint }]}>
-            <Ionicons name="stats-chart" size={22} color="#FFFFFF" />
-          </View>
-        </View>
+      <View style={styles.filterSection}>
+        <ThemedText style={styles.sectionTitle}>{t('stats')}</ThemedText>
+        <View style={styles.filterRow}>
+          {periodOptions.map((option) => {
+            const isActive = option.value === periodFilter;
 
-        <ThemedText style={[styles.heroMeta, { color: textSecondary }]}>
-          {activeSubscriptions.length > 0
-            ? t('acrossActiveSubscriptions', { count: activeSubscriptions.length })
-            : t('addSubscriptionsToUnlock')}
-        </ThemedText>
-
-        <View style={styles.heroFooter}>
-          <View style={[styles.heroPill, { backgroundColor: '#FFFFFFAA' }]}>
-            <ThemedText style={styles.heroPillLabel}>{t('yearly')}</ThemedText>
-            <ThemedText style={styles.heroPillValue}>
-              {formatCurrency(yearlyProjection, displayCurrency, locale)}
-            </ThemedText>
-          </View>
-          <View style={[styles.heroPill, { backgroundColor: '#FFFFFFAA' }]}>
-            <ThemedText style={styles.heroPillLabel}>{t('average')}</ThemedText>
-            <ThemedText style={styles.heroPillValue}>
-              {formatCurrency(averageSubscriptionCost, displayCurrency, locale)}
-            </ThemedText>
-          </View>
+            return (
+              <Pressable
+                key={option.value}
+                accessibilityRole="button"
+                onPress={() => setPeriodFilter(option.value)}
+                style={({ pressed }) => [
+                  styles.filterChip,
+                  {
+                    backgroundColor: isActive ? tintColor : surfaceSecondary,
+                    borderColor: isActive ? tintColor : borderColor,
+                    opacity: pressed ? 0.88 : 1,
+                  },
+                ]}>
+                <ThemedText
+                  lightColor={isActive ? '#FFFFFF' : undefined}
+                  darkColor={isActive ? '#FFFFFF' : undefined}
+                  style={styles.filterChipText}>
+                  {option.label}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
         </View>
-      </Card>
+      </View>
 
       <View style={styles.insightsGrid}>
         {insightCards.map((card) => (
@@ -238,16 +364,7 @@ export default function StatsScreen() {
         ))}
       </View>
 
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionCopy}>
-          <ThemedText style={styles.sectionTitle}>{t('categoryBreakdown')}</ThemedText>
-          <ThemedText style={[styles.sectionMeta, { color: textSecondary }]}>
-            {t('rankedByMonthlySpend')}
-          </ThemedText>
-        </View>
-      </View>
-
-      {categoryBreakdown.length === 0 ? (
+      {activeSubscriptions.length === 0 ? (
         <Card>
           <ThemedText style={styles.emptyTitle}>{t('noStats')}</ThemedText>
           <ThemedText style={[styles.emptyCopy, { color: textSecondary }]}>
@@ -255,52 +372,127 @@ export default function StatsScreen() {
           </ThemedText>
         </Card>
       ) : (
-        <Card padded={false}>
-          {categoryBreakdown.map((item, index) => (
-            <View
-              key={item.category}
-              style={[
-                styles.categoryRow,
-                index < categoryBreakdown.length - 1 ? { borderBottomColor: dividerColor } : null,
-              ]}>
-              <View style={styles.categoryRowTop}>
-                <View style={styles.categoryCopy}>
+        <>
+          <Card style={styles.chartCard}>
+            <View style={styles.chartHeader}>
+              <View>
+                <ThemedText style={styles.sectionTitle}>{t('renewalForecast')}</ThemedText>
+                <ThemedText style={[styles.sectionMeta, { color: textSecondary }]}>
+                  {t('projectedSpend')} · {formatCurrency(projectedSpend, displayCurrency, locale)}
+                </ThemedText>
+              </View>
+              <View style={[styles.chartIcon, { backgroundColor: accentMint }]}>
+                <Ionicons name="analytics-outline" size={18} color="#FFFFFF" />
+              </View>
+            </View>
+
+            <View style={styles.forecastChart}>
+              {monthlyForecast.map((item, index) => {
+                const height = Math.max((item.spend / maxForecastSpend) * 80, item.spend > 0 ? 8 : 2);
+
+                return (
+                  <View key={item.label} style={styles.forecastItem}>
+                    <View style={styles.forecastTrack}>
+                      <View
+                        style={[
+                          styles.forecastBar,
+                          {
+                            height,
+                            backgroundColor: CHART_COLORS[index % CHART_COLORS.length],
+                          },
+                        ]}
+                      />
+                    </View>
+                    <View style={styles.forecastLabelGroup}>
+                      <ThemedText style={styles.columnLabel}>{item.label}</ThemedText>
+                      <ThemedText style={[styles.forecastYear, { color: textSecondary }]}>
+                        {item.year}
+                      </ThemedText>
+                    </View>
+                    <ThemedText style={[styles.columnValue, { color: textSecondary }]}>
+                      {item.spend > 0 ? formatCurrency(item.spend, displayCurrency, locale) : '-'}
+                    </ThemedText>
+                  </View>
+                );
+              })}
+            </View>
+          </Card>
+
+          <Card style={styles.chartCard}>
+            <View style={styles.chartHeader}>
+              <View>
+                <ThemedText style={styles.sectionTitle}>{t('categoryBreakdown')}</ThemedText>
+                <ThemedText style={[styles.sectionMeta, { color: textSecondary }]}>
+                  {t('rankedByMonthlySpend')}
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.barList}>
+              {categoryBreakdown.map((item, index) => (
+                <View key={item.category} style={styles.barRow}>
+                  <View style={styles.barRowHeader}>
+                    <ThemedText style={styles.barLabel}>{translateCategory(item.category)}</ThemedText>
+                    <ThemedText style={[styles.barValue, { color: textSecondary }]}>
+                      {formatCurrency(item.monthlySpend, displayCurrency, locale)} · {Math.round(item.share * 100)}%
+                    </ThemedText>
+                  </View>
+                  <View style={[styles.progressTrack, { backgroundColor: surfaceSecondary }]}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: `${Math.max((item.monthlySpend / maxCategorySpend) * 100, 8)}%`,
+                          backgroundColor: CHART_COLORS[index % CHART_COLORS.length],
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Card>
+
+          <Card padded={false}>
+            <View style={styles.listHeader}>
+              <ThemedText style={styles.sectionTitle}>{t('topSubscriptions')}</ThemedText>
+              <ThemedText style={[styles.sectionMeta, { color: textSecondary }]}>
+                {t('normalizedMonthly', { amount: formatCurrency(monthlyTotal, displayCurrency, locale) })}
+              </ThemedText>
+            </View>
+            {topSubscriptions.map((item, index) => (
+              <View
+                key={item.id}
+                style={[
+                  styles.subscriptionRow,
+                  index < topSubscriptions.length - 1 ? { borderBottomColor: dividerColor } : null,
+                ]}>
+                <View style={styles.subscriptionInfo}>
                   <View style={[styles.categoryBadge, { backgroundColor: surfaceSecondary }]}>
                     <ThemedText style={styles.categoryBadgeText}>{index + 1}</ThemedText>
                   </View>
-                  <View style={styles.categoryText}>
-                    <ThemedText style={styles.categoryName}>{translateCategory(item.category)}</ThemedText>
-                    <ThemedText style={[styles.categoryMeta, { color: textSecondary }]}>
-                      {item.count === 1 ? t('oneActiveSubscription') : t('activeSubscriptionsCount', { count: item.count })}
-                    </ThemedText>
+                  <View style={styles.subscriptionCopy}>
+                    <ThemedText style={styles.categoryName}>{item.name}</ThemedText>
+                    <View style={[styles.progressTrack, { backgroundColor: surfaceSecondary }]}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          {
+                            width: `${Math.max((item.monthlySpend / maxSubscriptionSpend) * 100, 8)}%`,
+                            backgroundColor: index === 0 ? accentGold : accentBlue,
+                          },
+                        ]}
+                      />
+                    </View>
                   </View>
                 </View>
-
-                <View style={styles.categoryValues}>
-                  <ThemedText style={styles.categoryValue}>
-                    {formatCurrency(item.monthlySpend, displayCurrency, locale)}
-                  </ThemedText>
-                  <ThemedText style={[styles.categoryShare, { color: textSecondary }]}>
-                    {Math.round(item.share * 100)}%
-                  </ThemedText>
-                </View>
+                <ThemedText style={styles.categoryValue}>
+                  {formatCurrency(item.monthlySpend, displayCurrency, locale)}
+                </ThemedText>
               </View>
-
-              <View style={[styles.progressTrack, { backgroundColor: surfaceSecondary }]}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.max(item.share * 100, 8)}%`,
-                      backgroundColor:
-                        index === 0 ? accentMint : index === 1 ? accentBlue : accentPeach,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          ))}
-        </Card>
+            ))}
+          </Card>
+        </>
       )}
     </ScreenContainer>
   );
@@ -308,8 +500,133 @@ export default function StatsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 120,
+    paddingBottom: 88,
     gap: Spacing.xl,
+  },
+  filterSection: {
+    gap: Spacing.xs,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  filterChip: {
+    flex: 1,
+    minHeight: 34,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipText: {
+    ...Typography.caption,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  chartCard: {
+    gap: Spacing.md,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  chartIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  forecastChart: {
+    minHeight: 136,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 8,
+    overflow: 'hidden',
+  },
+  forecastItem: {
+    width: 38,
+    alignItems: 'center',
+    gap: 4,
+  },
+  forecastTrack: {
+    width: 18,
+    height: 88,
+    borderRadius: Radius.pill,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  forecastBar: {
+    width: '100%',
+    borderRadius: Radius.pill,
+  },
+  forecastLabelGroup: {
+    minHeight: 30,
+    alignItems: 'center',
+    gap: 0,
+  },
+  forecastYear: {
+    ...Typography.caption,
+    fontSize: 10,
+  },
+  columnValue: {
+    ...Typography.caption,
+    textAlign: 'center',
+    fontSize: 10,
+  },
+  columnLabel: {
+    ...Typography.caption,
+    fontWeight: '700',
+  },
+  barList: {
+    gap: Spacing.md,
+  },
+  barRow: {
+    gap: Spacing.xs,
+  },
+  barRowHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  barLabel: {
+    ...Typography.headline,
+    flex: 1,
+  },
+  barValue: {
+    ...Typography.footnote,
+    textAlign: 'right',
+    flexShrink: 0,
+  },
+  listHeader: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+    gap: 2,
+  },
+  subscriptionRow: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  subscriptionInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  subscriptionCopy: {
+    flex: 1,
+    gap: Spacing.xs,
   },
   heroCard: {
     gap: Spacing.md,

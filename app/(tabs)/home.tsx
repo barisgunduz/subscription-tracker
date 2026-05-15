@@ -1,6 +1,6 @@
-import { ComponentProps } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/Card';
@@ -264,8 +264,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 120,
-    gap: Spacing.xl,
+    paddingBottom: 88,
+    gap: Spacing.sm,
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -318,7 +318,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: Spacing.md,
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   sectionCopy: {
     flex: 1,

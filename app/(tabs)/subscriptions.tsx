@@ -419,7 +419,7 @@ export default function SubscriptionsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 120,
+    paddingBottom: 88,
     gap: Spacing.lg,
   },
   calendarCard: {

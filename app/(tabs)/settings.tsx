@@ -245,7 +245,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 120,
+    paddingBottom: 88,
     gap: Spacing.lg,
   },
   row: {
