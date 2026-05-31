@@ -1,1 +1,5 @@
-export { useColorScheme } from 'react-native';
+import { usePreferencesStore } from '@/store/preferencesStore';
+
+export function useColorScheme() {
+  return usePreferencesStore((state) => state.theme);
+}

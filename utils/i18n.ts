@@ -56,6 +56,7 @@ const en = {
   dataYouEnter: 'Data You Enter',
   dataYouEnterBody:
     'Subscription names, prices, billing dates, categories, notes, and notification preferences are stored locally on your device. We do not operate a server that receives or stores this subscription data. The only network request used for app functionality is a currency-rate request to api.frankfurter.dev, without your saved subscription details.',
+  darkTheme: 'Dark',
   defaultService: 'Default Service',
   delete: 'Delete',
   deleteSubscription: 'Delete subscription',
@@ -89,6 +90,7 @@ const en = {
   languageDefaultBody: 'English is the default language. Your selection is saved on this device.',
   languageDefaultValue: 'Default',
   lastUpdated: 'Last updated: {{date}}',
+  lightTheme: 'Light',
   monthly: 'Monthly',
   monthlyBillingReminders: 'Daily billing reminders at 9:00 AM',
   monthlySpend: 'Monthly Spend',
@@ -183,6 +185,7 @@ const en = {
   tabCalendarView: 'Switch to calendar view',
   tabListView: 'Switch to subscriptions list view',
   today: 'Today',
+  theme: 'Theme',
   topCategory: 'Top category',
   topSubscriptions: 'Top Subscriptions',
   trackSubscriptionsBody:
@@ -280,6 +283,7 @@ const tr: TranslationMap = {
   dataYouEnter: 'Girdiğin Veriler',
   dataYouEnterBody:
     'Abonelik adları, fiyatlar, fatura tarihleri, kategoriler, notlar ve bildirim tercihleri cihazında yerel olarak saklanır. Bu abonelik verilerini alan veya saklayan bir sunucu işletmiyoruz. Uygulama işlevi için kullanılan tek ağ isteği, kayıtlı abonelik detayların olmadan api.frankfurter.dev adresine yapılan kur isteğidir.',
+  darkTheme: 'Koyu',
   defaultService: 'Hazır Servis',
   delete: 'Sil',
   deleteSubscription: 'Aboneliği sil',
@@ -313,6 +317,7 @@ const tr: TranslationMap = {
   languageDefaultBody: 'İngilizce varsayılan dildir. Seçimin bu cihazda kaydedilir.',
   languageDefaultValue: 'Varsayılan',
   lastUpdated: 'Son güncelleme: {{date}}',
+  lightTheme: 'Açık',
   monthly: 'Aylık',
   monthlyBillingReminders: 'Her gün 09:00 fatura hatırlatmaları',
   monthlySpend: 'Aylık Harcama',
@@ -407,6 +412,7 @@ const tr: TranslationMap = {
   tabCalendarView: 'Takvim görünümüne geç',
   tabListView: 'Abonelik listesine geç',
   today: 'Bugün',
+  theme: 'Tema',
   topCategory: 'En yüksek kategori',
   topSubscriptions: 'En Yüksek Abonelikler',
   trackSubscriptionsBody:

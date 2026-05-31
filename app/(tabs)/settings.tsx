@@ -6,6 +6,7 @@ import Constants from 'expo-constants';
 import { Card } from '@/components/Card';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { ThemedText } from '@/components/themed-text';
+import { AppThemeName } from '@/constants/colors';
 import { getAppLanguage } from '@/constants/languages';
 import { Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -76,8 +77,10 @@ export default function SettingsScreen() {
   const languageCode = usePreferencesStore((state) => state.languageCode);
   const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
   const notificationsEnabled = usePreferencesStore((state) => state.notificationsEnabled);
+  const theme = usePreferencesStore((state) => state.theme);
   const setDisplayCurrency = usePreferencesStore((state) => state.setDisplayCurrency);
   const setNotificationsEnabled = usePreferencesStore((state) => state.setNotificationsEnabled);
+  const setTheme = usePreferencesStore((state) => state.setTheme);
 
   const tintColor = useThemeColor({}, 'tint');
   const surfaceSecondary = useThemeColor({}, 'surfaceSecondary');
@@ -118,6 +121,22 @@ export default function SettingsScreen() {
         ...appCurrencies.map((currency) => ({
           text: t('currencyValue', { code: currency.code, symbol: currency.symbol }),
           onPress: () => setDisplayCurrency(currency.code),
+        })),
+        { text: t('cancel'), style: 'cancel' as const },
+      ]
+    );
+  }
+
+  function handleThemeSelect() {
+    const themeOptions: AppThemeName[] = ['light', 'dark'];
+
+    Alert.alert(
+      t('theme'),
+      undefined,
+      [
+        ...themeOptions.map((option) => ({
+          text: option === 'light' ? t('lightTheme') : t('darkTheme'),
+          onPress: () => setTheme(option),
         })),
         { text: t('cancel'), style: 'cancel' as const },
       ]
@@ -216,6 +235,11 @@ export default function SettingsScreen() {
             symbol: selectedCurrency.symbol,
           })}
           onPress={handleCurrencySelect}
+        />
+        <SettingsRow
+          label={t('theme')}
+          value={theme === 'light' ? t('lightTheme') : t('darkTheme')}
+          onPress={handleThemeSelect}
         />
         <SettingsRow
           label={t('dataExport')}
