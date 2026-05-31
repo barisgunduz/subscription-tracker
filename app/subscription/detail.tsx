@@ -8,10 +8,9 @@ import { ServiceLogo } from '@/components/ServiceLogo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { usePreferencesStore } from '@/store/preferencesStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { getCategoryTranslationKey } from '@/utils/categories';
-import { convertCurrency, formatCurrency } from '@/utils/currency';
+import { formatCurrency } from '@/utils/currency';
 import { useI18n } from '@/utils/i18n';
 
 function formatDate(value: string, locale: string) {
@@ -55,8 +54,6 @@ export default function SubscriptionDetailScreen() {
   const pauseSubscription = useSubscriptionStore((state) => state.pauseSubscription);
   const restartSubscription = useSubscriptionStore((state) => state.restartSubscription);
   const deleteSubscription = useSubscriptionStore((state) => state.deleteSubscription);
-  const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
-  const exchangeRates = usePreferencesStore((state) => state.exchangeRates);
 
   const tintColor = useThemeColor({}, 'tint');
   const textSecondary = useThemeColor({}, 'textSecondary');
@@ -89,23 +86,6 @@ export default function SubscriptionDetailScreen() {
     currentSubscription.currency,
     locale
   );
-  const displayPrice = formatCurrency(
-    convertCurrency(
-      currentSubscription.price,
-      currentSubscription.currency,
-      displayCurrency,
-      exchangeRates
-    ),
-    displayCurrency,
-    locale
-  );
-  const savedRates = currentSubscription.exchangeRatesAtCreation;
-  const savedRatesSummary = savedRates
-    ? t('exchangeRatesSummary', {
-        eur: savedRates.EUR.toFixed(4),
-        try: savedRates.TRY.toFixed(4),
-      })
-    : t('noneYet');
 
   function handlePause() {
     if (currentSubscription.status === 'paused') {
@@ -177,12 +157,6 @@ export default function SubscriptionDetailScreen() {
           label={t('price')}
           value={originalPrice}
         />
-        <DetailRow label={t('displayValue')} value={displayPrice} />
-        <DetailRow
-          label={t('exchangeRateDateLabel')}
-          value={currentSubscription.exchangeRatesDate ?? t('noneYet')}
-        />
-        <DetailRow label={t('exchangeRates')} value={savedRatesSummary} />
         <DetailRow
           label={t('billingCycle')}
           value={currentSubscription.billingCycle === 'monthly' ? t('monthly') : t('yearly')}

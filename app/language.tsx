@@ -21,9 +21,18 @@ export default function LanguageScreen() {
   const textSecondary = useThemeColor({}, 'textSecondary');
   const dividerColor = useThemeColor({}, 'divider');
 
+  function navigateBackToSettings() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace('/(tabs)/settings');
+  }
+
   function handleSelectLanguage(languageCode: AppLanguageCode) {
     if (languageCode === selectedLanguageCode) {
-      router.back();
+      navigateBackToSettings();
       return;
     }
 
@@ -42,7 +51,7 @@ export default function LanguageScreen() {
       );
     }
 
-    router.back();
+    navigateBackToSettings();
   }
 
   return (

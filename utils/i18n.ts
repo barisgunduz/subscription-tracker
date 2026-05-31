@@ -14,7 +14,7 @@ const en = {
   appVersion: 'App Version',
   analytics: 'Analytics',
   analyticsBody:
-    'The app may use an analytics tool to understand basic app usage, performance, and crashes. Analytics, if enabled, is used to improve the app and is not used for advertising or user profiling.',
+    'The app does not include analytics, advertising trackers, or crash reporting SDKs. App activity is not used for advertising or user profiling.',
   attention: 'Attention',
   authenticationAndAds: 'Authentication and Ads',
   authenticationAndAdsBody:
@@ -52,10 +52,10 @@ const en = {
   dataExportValue: 'JSON, Excel-compatible CSV, or PDF',
   dataStored: 'How Data Is Stored',
   dataStoredBody:
-    'Your subscription data is stored locally on your device. There is no account system, no ads, and no server account connected to your saved subscription details.',
+    'Your subscription data is stored locally on your device. Substrack requests exchange rates from api.frankfurter.dev so it can show totals in your selected display currency. Your saved subscription details are not sent with that request, and if the request fails, the app continues using its built-in default exchange rates.',
   dataYouEnter: 'Data You Enter',
   dataYouEnterBody:
-    'Subscription names, prices, billing dates, categories, notes, and notification preferences are stored locally on your device. We do not operate a server that receives or stores this subscription data.',
+    'Subscription names, prices, billing dates, categories, notes, and notification preferences are stored locally on your device. We do not operate a server that receives or stores this subscription data. The only network request used for app functionality is a currency-rate request to api.frankfurter.dev, without your saved subscription details.',
   defaultService: 'Default Service',
   delete: 'Delete',
   deleteSubscription: 'Delete subscription',
@@ -131,7 +131,7 @@ const en = {
   optionalNotes: 'Optional notes',
   overview: 'Overview',
   overviewBody:
-    'Substrack is designed to work without an account, advertising, or selling personal data. The app helps you track subscriptions using information you enter on your device.',
+    'Substrack is designed to work without an account, analytics, advertising, or selling personal data. The app helps you track subscriptions using information you enter on your device, and uses api.frankfurter.dev only to refresh exchange rates for currency conversion.',
   pause: 'Pause',
   pauseSubscription: 'Pause subscription',
   pauseSubscriptionBody: 'Pause {{name}}?',
@@ -238,7 +238,7 @@ const tr: TranslationMap = {
   appVersion: 'Uygulama Sürümü',
   analytics: 'Analitik',
   analyticsBody:
-    'Uygulama temel kullanım, performans ve çökme bilgilerini anlamak için bir analitik aracı kullanabilir. Analitik etkinse uygulamayı geliştirmek için kullanılır; reklam veya kullanıcı profilleme için kullanılmaz.',
+    'Uygulama analitik, reklam takip aracı veya çökme raporlama SDK’sı içermez. Uygulama etkinliği reklam veya kullanıcı profilleme için kullanılmaz.',
   attention: 'Dikkat',
   authenticationAndAds: 'Kimlik Doğrulama ve Reklamlar',
   authenticationAndAdsBody:
@@ -276,10 +276,10 @@ const tr: TranslationMap = {
   dataExportValue: 'JSON, Excel uyumlu CSV veya PDF',
   dataStored: 'Veriler Nasıl Saklanır',
   dataStoredBody:
-    'Abonelik verilerin cihazında yerel olarak saklanır. Hesap sistemi, reklam veya kayıtlı abonelik detaylarına bağlı bir sunucu hesabı yoktur.',
+    'Abonelik verilerin cihazında yerel olarak saklanır. Substrack, seçtiğin görüntüleme para biriminde toplamları gösterebilmek için api.frankfurter.dev üzerinden kur bilgisi ister. Kayıtlı abonelik detayların bu istekle gönderilmez; istek başarısız olursa uygulama yerleşik varsayılan kur değerleriyle çalışmaya devam eder.',
   dataYouEnter: 'Girdiğin Veriler',
   dataYouEnterBody:
-    'Abonelik adları, fiyatlar, fatura tarihleri, kategoriler, notlar ve bildirim tercihleri cihazında yerel olarak saklanır. Bu abonelik verilerini alan veya saklayan bir sunucu işletmiyoruz.',
+    'Abonelik adları, fiyatlar, fatura tarihleri, kategoriler, notlar ve bildirim tercihleri cihazında yerel olarak saklanır. Bu abonelik verilerini alan veya saklayan bir sunucu işletmiyoruz. Uygulama işlevi için kullanılan tek ağ isteği, kayıtlı abonelik detayların olmadan api.frankfurter.dev adresine yapılan kur isteğidir.',
   defaultService: 'Hazır Servis',
   delete: 'Sil',
   deleteSubscription: 'Aboneliği sil',
@@ -355,7 +355,7 @@ const tr: TranslationMap = {
   optionalNotes: 'İsteğe bağlı notlar',
   overview: 'Genel Bakış',
   overviewBody:
-    'Substrack hesap, reklam veya kişisel veri satışı olmadan çalışacak şekilde tasarlandı. Uygulama, cihazına girdiğin bilgilerle aboneliklerini takip etmene yardımcı olur.',
+    'Substrack hesap, analitik, reklam veya kişisel veri satışı olmadan çalışacak şekilde tasarlandı. Uygulama, cihazına girdiğin bilgilerle aboneliklerini takip etmene yardımcı olur ve para birimi dönüşümü için yalnızca api.frankfurter.dev üzerinden kur bilgilerini yeniler.',
   pause: 'Duraklat',
   pauseSubscription: 'Aboneliği duraklat',
   pauseSubscriptionBody: '{{name}} duraklatılsın mı?',

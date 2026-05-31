@@ -4,7 +4,7 @@
     "slug": "substrack",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Suburio-Logo.png",
+    "icon": "./assets/images/Substrack-Logo.png",
     "scheme": "substrack",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -16,24 +16,23 @@
       "package": "com.barisgunduz.substrack",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Suburio-Logo.png",
-        "monochromeImage": "./assets/images/Suburio-Logo.png"
+        "foregroundImage": "./assets/images/Substrack-Logo.png",
+        "monochromeImage": "./assets/images/Substrack-Logo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Suburio-Logo.png"
+      "favicon": "./assets/images/Substrack-Logo.png"
     },
     "plugins": [
       "expo-router",
-      "expo-dev-client",
       "expo-notifications",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Suburio-Logo.png",
+          "image": "./assets/images/Substrack-Logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -41,7 +40,9 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
