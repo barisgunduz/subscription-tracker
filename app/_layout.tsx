@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 
 import { CurrencyRateSync } from '@/components/CurrencyRateSync';
 import { NotificationSync } from '@/components/NotificationSync';
+import { WidgetSync } from '@/components/WidgetSync';
 import { getAppLanguage } from '@/constants/languages';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -49,6 +50,7 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <CurrencyRateSync />
       <NotificationSync />
+      <WidgetSync />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />

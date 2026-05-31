@@ -10,7 +10,12 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.barisgunduz.substrack"
+      "bundleIdentifier": "com.barisgunduz.substrack",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.barisgunduz.substrack"
+        ]
+      }
     },
     "android": {
       "package": "com.barisgunduz.substrack",
