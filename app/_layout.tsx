@@ -35,8 +35,20 @@ export default function RootLayout() {
     router.replace('/(tabs)/settings');
   }
 
+  function handleSubscriptionsBack() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace('/(tabs)/subscriptions');
+  }
+
   const settingsBackButton = () => (
     <HeaderBackButton label={t('settings')} onPress={handleSettingsBack} tintColor={tintColor} />
+  );
+  const subscriptionsBackButton = () => (
+    <HeaderBackButton label={t('back')} onPress={handleSubscriptionsBack} tintColor={tintColor} />
   );
 
   useEffect(() => {
@@ -60,7 +72,11 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="subscription/detail"
-          options={{ title: t('subscriptions'), headerBackTitle: t('back') }}
+          options={{
+            title: t('subscriptions'),
+            headerBackTitle: t('back'),
+            headerLeft: subscriptionsBackButton,
+          }}
         />
         <Stack.Screen
           name="subscription/edit"

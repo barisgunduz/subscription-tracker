@@ -6,6 +6,10 @@ import { Subscription } from '@/types/subscription';
 import { translate, TranslationKey } from '@/utils/i18n';
 
 const CHANNEL_ID = 'billing-reminders';
+const REMINDER_HOUR = 9;
+const REMINDER_MINUTE = 0;
+const MAX_SCHEDULED_REMINDERS = 60;
+const SCHEDULE_WINDOW_DAYS = 370;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -16,68 +20,141 @@ Notifications.setNotificationHandler({
   }),
 });
 
+type ReminderKind = 'due' | 'oneDayBefore';
+
+type BillingReminder = {
+  date: Date;
+  subscription: Subscription;
+  kind: ReminderKind;
+};
+
 function startOfToday() {
   const now = new Date();
 
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
-function getDaysRemaining(nextBillingDate: string) {
-  const today = startOfToday();
-  const billingDate = new Date(nextBillingDate);
-  const normalizedBillingDate = new Date(
-    billingDate.getFullYear(),
-    billingDate.getMonth(),
-    billingDate.getDate()
-  );
+function parseLocalDate(value: string) {
+  const [year, month, day] = value.split('-').map(Number);
 
-  const differenceInMs = normalizedBillingDate.getTime() - today.getTime();
+  if (!year || !month || !day) {
+    return null;
+  }
 
-  return Math.max(0, Math.ceil(differenceInMs / (1000 * 60 * 60 * 24)));
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
 }
 
-function buildReminderCopy(subscriptions: Subscription[]) {
+function addDays(date: Date, days: number) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+function getDaysInMonth(year: number, monthIndex: number) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+function clampDay(year: number, monthIndex: number, day: number) {
+  return Math.max(1, Math.min(day, getDaysInMonth(year, monthIndex)));
+}
+
+function addBillingCycle(date: Date, subscription: Subscription) {
+  const nextMonthIndex =
+    subscription.billingCycle === 'monthly' ? date.getMonth() + 1 : date.getMonth() + 12;
+  const nextYear = date.getFullYear() + Math.floor(nextMonthIndex / 12);
+  const normalizedMonthIndex = ((nextMonthIndex % 12) + 12) % 12;
+
+  return new Date(
+    nextYear,
+    normalizedMonthIndex,
+    clampDay(nextYear, normalizedMonthIndex, subscription.billingDay)
+  );
+}
+
+function withReminderTime(date: Date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    REMINDER_HOUR,
+    REMINDER_MINUTE
+  );
+}
+
+function buildReminderContent(subscription: Subscription, kind: ReminderKind) {
   const languageCode = usePreferencesStore.getState().languageCode;
   const t = (key: TranslationKey, params?: Record<string, string | number>) =>
     translate(languageCode, key, params);
-  const activeSubscriptions = subscriptions.filter((subscription) => subscription.status === 'active');
-  const dueToday = activeSubscriptions.filter(
-    (subscription) => getDaysRemaining(subscription.nextBillingDate) === 0
-  );
-  const dueSoon = activeSubscriptions.filter((subscription) => {
-    const daysRemaining = getDaysRemaining(subscription.nextBillingDate);
-    return daysRemaining > 0 && daysRemaining <= 3;
-  });
 
-  if (dueToday.length > 0) {
-    const leadName = dueToday[0]?.name;
-
+  if (kind === 'due') {
     return {
       title: t('upcomingPayments'),
-      body: `${leadName} ${t('due')}`,
-    };
-  }
-
-  if (dueSoon.length > 0) {
-    const soonest = [...dueSoon].sort(
-      (left, right) =>
-        new Date(left.nextBillingDate).getTime() - new Date(right.nextBillingDate).getTime()
-    )[0];
-    const days = getDaysRemaining(soonest.nextBillingDate);
-
-    return {
-      title: t('upcomingPayments'),
-      body: `${soonest.name}: ${days === 1 ? t('oneDayLeft') : t('daysLeft', { count: days })}`,
+      body: `${subscription.name} ${t('due')}`,
     };
   }
 
   return {
-    title: t('subscriptions'),
-    body:
-      activeSubscriptions.length > 0
-        ? t('activeSubscriptionsCount', { count: activeSubscriptions.length })
-        : t('addYourFirstSubscription'),
+    title: t('upcomingPayments'),
+    body: `${subscription.name}: ${t('oneDayLeft')}`,
   };
+}
+
+function buildBillingReminders(subscriptions: Subscription[]) {
+  const now = new Date();
+  const today = startOfToday();
+  const scheduleUntil = addDays(today, SCHEDULE_WINDOW_DAYS);
+  const reminders: BillingReminder[] = [];
+
+  for (const subscription of subscriptions) {
+    if (subscription.status !== 'active') {
+      continue;
+    }
+
+    let billingDate = parseLocalDate(subscription.nextBillingDate);
+
+    if (!billingDate) {
+      continue;
+    }
+
+    while (billingDate < today) {
+      billingDate = addBillingCycle(billingDate, subscription);
+    }
+
+    while (billingDate <= scheduleUntil) {
+      const dueReminderDate = withReminderTime(billingDate);
+      const beforeReminderDate = withReminderTime(addDays(billingDate, -1));
+
+      if (beforeReminderDate > now) {
+        reminders.push({
+          date: beforeReminderDate,
+          subscription,
+          kind: 'oneDayBefore',
+        });
+      }
+
+      if (dueReminderDate > now) {
+        reminders.push({
+          date: dueReminderDate,
+          subscription,
+          kind: 'due',
+        });
+      }
+
+      billingDate = addBillingCycle(billingDate, subscription);
+    }
+  }
+
+  return reminders
+    .sort((left, right) => left.date.getTime() - right.date.getTime())
+    .slice(0, MAX_SCHEDULED_REMINDERS);
 }
 
 async function ensureChannelAsync() {
@@ -123,27 +200,39 @@ export async function syncBillingNotificationsAsync(subscriptions: Subscription[
   await ensureChannelAsync();
   await disableBillingNotificationsAsync();
 
-  const content = buildReminderCopy(subscriptions);
+  const reminders = buildBillingReminders(subscriptions);
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: content.title,
-      body: content.body,
-      sound: 'default',
-    },
-    trigger:
-      Platform.OS === 'android'
-        ? {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
-            hour: 9,
-            minute: 0,
-            channelId: CHANNEL_ID,
-          }
-        : {
-            type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-            hour: 9,
-            minute: 0,
-            repeats: true,
+  await Promise.all(
+    reminders.map((reminder) => {
+      const content = buildReminderContent(reminder.subscription, reminder.kind);
+
+      return Notifications.scheduleNotificationAsync({
+        content: {
+          title: content.title,
+          body: content.body,
+          sound: 'default',
+          data: {
+            subscriptionId: reminder.subscription.id,
+            reminderKind: reminder.kind,
+            scheduledFor: reminder.date.toISOString(),
           },
-  });
+        },
+        trigger:
+          Platform.OS === 'android'
+            ? {
+                type: Notifications.SchedulableTriggerInputTypes.DATE,
+                date: reminder.date,
+                channelId: CHANNEL_ID,
+              }
+            : {
+                type: Notifications.SchedulableTriggerInputTypes.DATE,
+                date: reminder.date,
+              },
+      });
+    })
+  );
+}
+
+export async function getScheduledBillingNotificationsAsync() {
+  return Notifications.getAllScheduledNotificationsAsync();
 }

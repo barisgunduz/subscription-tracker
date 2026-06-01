@@ -63,6 +63,15 @@ export default function SubscriptionDetailScreen() {
 
   const subscription = subscriptions.find((item) => item.id === subscriptionId);
 
+  function navigateBackToSubscriptions() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace('/(tabs)/subscriptions');
+  }
+
   if (!subscription) {
     return (
       <ScreenContainer contentStyle={styles.notFoundContainer}>
@@ -72,7 +81,7 @@ export default function SubscriptionDetailScreen() {
             {t('subscriptionNotFoundBody')}
           </ThemedText>
           <View style={styles.notFoundAction}>
-            <PrimaryButton onPress={() => router.back()} title={t('goBack')} />
+            <PrimaryButton onPress={navigateBackToSubscriptions} title={t('goBack')} />
           </View>
         </Card>
       </ScreenContainer>
