@@ -40,8 +40,8 @@ Legend:
 - ✅ Billing reminders are opt-in and can be turned off.
 - ✅ Billing reminders are scheduled as local notifications for one day before and the renewal day at 09:00.
 - ✅ iOS WidgetKit extension exists for upcoming payments.
+- ✅ iPad support is disabled; first release targets iPhone only.
 - ❌ Full physical-device QA pass is still needed on a real iPhone.
-- ❌ iPad QA pass is still needed because `supportsTablet` is enabled.
 - ❌ Real-device notification permission, scheduling, and delivery should be tested.
 - ❌ Real-device widget add, refresh, and day-rollover behavior should be tested.
 - ❌ Fresh install, app update, app delete/reinstall, and empty-state flows should be tested.
@@ -105,7 +105,7 @@ Legend:
 - ❌ App Store screenshots must be captured and uploaded.
 - ❌ At least one screenshot is required; recommended set should cover Home, Subscriptions, Add/Edit, Stats, Settings, and Widget.
 - ❌ iPhone screenshot set must be prepared.
-- ❌ iPad screenshot set must be prepared because iPad support is enabled.
+- ✅ iPad screenshots are not required for this release because iPad support is disabled.
 - ❌ Screenshots must not show debug logs, placeholder content, broken UI, or private personal data.
 - ❌ App preview video is optional and not required.
 
