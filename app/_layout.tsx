@@ -2,8 +2,9 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { HeaderBackButton } from '@react-navigation/elements';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { I18nManager } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import 'react-native-reanimated';
 
 import { CurrencyRateSync } from '@/components/CurrencyRateSync';
@@ -25,6 +26,7 @@ export default function RootLayout() {
   const languageCode = usePreferencesStore((state) => state.languageCode);
   const tintColor = useThemeColor({}, 'tint');
   const { t } = useI18n();
+  const handledNotificationResponseId = useRef<string | null>(null);
 
   function handleSettingsBack() {
     if (router.canGoBack()) {
@@ -57,6 +59,47 @@ export default function RootLayout() {
     I18nManager.allowRTL(true);
     I18nManager.forceRTL(Boolean(selectedLanguage.isRTL));
   }, [languageCode]);
+
+  useEffect(() => {
+    function openSubscriptionFromNotification(
+      response: Notifications.NotificationResponse | null
+    ) {
+      if (!response) {
+        return;
+      }
+
+      const responseId =
+        response.notification.request.identifier ??
+        response.notification.date?.toString() ??
+        null;
+
+      if (responseId && handledNotificationResponseId.current === responseId) {
+        return;
+      }
+
+      const subscriptionId = response.notification.request.content.data?.subscriptionId;
+
+      if (typeof subscriptionId !== 'string' || !subscriptionId) {
+        return;
+      }
+
+      handledNotificationResponseId.current = responseId;
+      router.push({
+        pathname: '/(tabs)/subscriptions',
+        params: { highlightId: subscriptionId },
+      });
+    }
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      openSubscriptionFromNotification
+    );
+
+    void Notifications.getLastNotificationResponseAsync().then(openSubscriptionFromNotification);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [router]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

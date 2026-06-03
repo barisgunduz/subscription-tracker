@@ -139,7 +139,10 @@ function sortSubscriptions(
 
 export default function SubscriptionsScreen() {
   const router = useRouter();
-  const { view } = useLocalSearchParams<{ view?: string }>();
+  const { highlightId, view } = useLocalSearchParams<{
+    highlightId?: string | string[];
+    view?: string;
+  }>();
   const { locale, t } = useI18n();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
@@ -152,7 +155,10 @@ export default function SubscriptionsScreen() {
   const surfaceSecondary = useThemeColor({}, 'surfaceSecondary');
   const surfaceTertiary = useThemeColor({}, 'surfaceTertiary');
   const borderColor = useThemeColor({}, 'border');
+  const dangerColor = useThemeColor({}, 'danger');
   const tintMuted = useThemeColor({}, 'tintMuted');
+  const highlightedSubscriptionId = Array.isArray(highlightId) ? highlightId[0] : highlightId;
+  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(null);
 
   const defaultSelectedDate = useMemo(() => {
     const sortedByBillingDate = sortSubscriptions(
@@ -212,6 +218,22 @@ export default function SubscriptionsScreen() {
       setVisibleMonth(getMonthStart(parseIsoDate(selectedDate)));
     }
   }, [isCalendarView, selectedDate]);
+
+  useEffect(() => {
+    if (!highlightedSubscriptionId) {
+      return;
+    }
+
+    setActiveHighlightId(highlightedSubscriptionId);
+
+    const timeout = setTimeout(() => {
+      setActiveHighlightId((currentId) =>
+        currentId === highlightedSubscriptionId ? null : currentId
+      );
+    }, 4500);
+
+    return () => clearTimeout(timeout);
+  }, [highlightedSubscriptionId]);
 
   return (
     <ScreenContainer scrollable contentStyle={styles.container}>
@@ -382,35 +404,51 @@ export default function SubscriptionsScreen() {
             </ThemedText>
           </Card>
         ) : (
-          (isCalendarView ? selectedDaySubscriptions : sortedSubscriptions).map((subscription) => (
-            <ListItem
-              key={subscription.id}
-              title={subscription.name}
-              subtitle={t('nextBilling', { date: formatDate(subscription.nextBillingDate, locale) })}
-              onPress={() =>
-                router.push({
-                  pathname: '/subscription/detail',
-                  params: { id: subscription.id },
-                })
-              }
-              leading={
-                <ServiceLogo
-                  serviceKey={subscription.serviceKey}
-                  name={subscription.name}
-                  size={44}
-                  style={[styles.logoBadge, { backgroundColor: surfaceSecondary }]}
-                />
-              }
-              trailing={
-                <View style={styles.trailing}>
-                  <ThemedText style={styles.priceText}>
-                    {formatCurrency(subscription.price, subscription.currency, locale)}
-                  </ThemedText>
-                </View>
-              }
-              showChevron
-            />
-          ))
+          (isCalendarView ? selectedDaySubscriptions : sortedSubscriptions).map((subscription) => {
+            const isHighlighted = subscription.id === activeHighlightId;
+
+            return (
+              <ListItem
+                key={subscription.id}
+                title={subscription.name}
+                subtitle={t('nextBilling', {
+                  date: formatDate(subscription.nextBillingDate, locale),
+                })}
+                onPress={() =>
+                  router.push({
+                    pathname: '/subscription/detail',
+                    params: { id: subscription.id },
+                  })
+                }
+                leading={
+                  <ServiceLogo
+                    serviceKey={subscription.serviceKey}
+                    name={subscription.name}
+                    size={44}
+                    style={[styles.logoBadge, { backgroundColor: surfaceSecondary }]}
+                  />
+                }
+                trailing={
+                  <View style={styles.trailing}>
+                    {isHighlighted ? (
+                      <View style={[styles.highlightDot, { backgroundColor: dangerColor }]} />
+                    ) : null}
+                    <ThemedText style={styles.priceText}>
+                      {formatCurrency(subscription.price, subscription.currency, locale)}
+                    </ThemedText>
+                  </View>
+                }
+                style={
+                  isHighlighted
+                    ? {
+                        borderColor: dangerColor,
+                      }
+                    : undefined
+                }
+                showChevron
+              />
+            );
+          })
         )}
       </View>
     </ScreenContainer>
@@ -545,6 +583,12 @@ const styles = StyleSheet.create({
   },
   trailing: {
     alignItems: 'flex-end',
+    gap: 4,
+  },
+  highlightDot: {
+    width: 9,
+    height: 9,
+    borderRadius: Radius.pill,
   },
   priceText: {
     ...Typography.headline,
