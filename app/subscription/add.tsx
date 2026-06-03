@@ -1,5 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
+  Alert,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -21,11 +26,12 @@ import { BILLING_CYCLES, BillingCycle } from '@/types/subscription';
 import { getCategoryTranslationKey } from '@/utils/categories';
 import { appCurrencies, AppCurrencyCode, getAppCurrency } from '@/utils/currency';
 import { useI18n } from '@/utils/i18n';
-import { Service, searchServices } from '@/utils/serviceLookup';
+import { Service, listServiceCategories, searchServices } from '@/utils/serviceLookup';
 
 type ServiceMode = 'default' | 'custom';
 
 const BILLING_CYCLE_OPTIONS: BillingCycle[] = [...BILLING_CYCLES];
+const NOTES_INPUT_ACCESSORY_ID = 'add-subscription-notes-accessory';
 
 function toIsoDate(date: Date) {
   return date.toISOString().split('T')[0];
@@ -60,6 +66,7 @@ export default function AddSubscriptionScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const addSubscription = useSubscriptionStore((state) => state.addSubscription);
+  const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const displayCurrency = usePreferencesStore((state) => state.displayCurrency);
   const exchangeRates = usePreferencesStore((state) => state.exchangeRates);
   const exchangeRatesDate = usePreferencesStore((state) => state.exchangeRatesDate);
@@ -81,9 +88,25 @@ export default function AddSubscriptionScreen() {
   const [billingDay, setBillingDay] = useState(String(new Date().getDate()));
   const [category, setCategory] = useState('');
   const [notes, setNotes] = useState('');
+  const [duplicateNameSuffix, setDuplicateNameSuffix] = useState('');
+  const [isDuplicateNameOverride, setIsDuplicateNameOverride] = useState(false);
+  const [isDuplicateSuffixEditing, setIsDuplicateSuffixEditing] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
+  const duplicateSuffixInputRef = useRef<TextInput>(null);
 
+  const availableCategories = listServiceCategories();
   const matchingServices = searchServices(serviceQuery).slice(0, 8);
+  const trimmedServiceQuery = serviceQuery.trim();
+  const hasNoServiceMatches = Boolean(trimmedServiceQuery) && matchingServices.length === 0;
+  const duplicateServiceSubscriptions = selectedService
+    ? subscriptions.filter(
+        (subscription) =>
+          subscription.serviceKey === selectedService.key && subscription.status !== 'cancelled'
+      )
+    : [];
+  const isSelectedServiceDuplicate =
+    serviceMode === 'default' && Boolean(selectedService) && duplicateServiceSubscriptions.length > 0;
+  const canEditDuplicateName = isSelectedServiceDuplicate && isDuplicateNameOverride;
   const selectedCurrency = getAppCurrency(currency);
   const translateCategory = (value: string) => {
     const key = getCategoryTranslationKey(value);
@@ -96,7 +119,27 @@ export default function AddSubscriptionScreen() {
     setServiceName(service.name);
     setCategory(service.category);
     setServiceQuery(service.name);
+    resetDuplicateNameState();
     setValidationMessage('');
+  }
+
+  function resetDuplicateNameState() {
+    setDuplicateNameSuffix('');
+    setIsDuplicateNameOverride(false);
+    setIsDuplicateSuffixEditing(false);
+  }
+
+  function getNextDuplicateSuffix(service: Service) {
+    const existingNames = new Set(
+      subscriptions.map((subscription) => subscription.name.trim().toLowerCase())
+    );
+    let suffix = 2;
+
+    while (existingNames.has(`${service.name}-${suffix}`.toLowerCase())) {
+      suffix += 1;
+    }
+
+    return String(suffix);
   }
 
   function handleServiceModeChange(nextMode: ServiceMode) {
@@ -104,13 +147,89 @@ export default function AddSubscriptionScreen() {
     setValidationMessage('');
 
     if (nextMode === 'custom') {
+      const customName = serviceQuery.trim() || serviceName.trim();
+
       setSelectedService(null);
-      setServiceQuery('');
+      resetDuplicateNameState();
+
+      if (customName) {
+        setServiceName(customName);
+      }
+
+      return;
+    }
+
+    if (selectedService) {
+      setServiceName(selectedService.name);
+      setCategory(selectedService.category);
+      setServiceQuery(selectedService.name);
       return;
     }
 
     setServiceName('');
     setCategory('');
+  }
+
+  function handleServiceQueryChange(value: string) {
+    setServiceQuery(value);
+    setSelectedService(null);
+    setServiceName('');
+    setCategory('');
+    resetDuplicateNameState();
+    setValidationMessage('');
+  }
+
+  function applyCustomServiceFromQuery() {
+    setServiceMode('custom');
+    setSelectedService(null);
+    setServiceName(trimmedServiceQuery);
+    resetDuplicateNameState();
+    setValidationMessage('');
+  }
+
+  function applyDuplicateNameOverride() {
+    if (!selectedService) {
+      return;
+    }
+
+    const nextSuffix = getNextDuplicateSuffix(selectedService);
+
+    setDuplicateNameSuffix(nextSuffix);
+    setServiceName(`${selectedService.name}-${nextSuffix}`);
+    setIsDuplicateNameOverride(true);
+    setIsDuplicateSuffixEditing(false);
+    setValidationMessage('');
+  }
+
+  function handleDuplicateSuffixChange(value: string) {
+    setDuplicateNameSuffix(value);
+
+    if (selectedService) {
+      setServiceName(`${selectedService.name}-${value}`);
+    }
+  }
+
+  function handleDuplicateSuffixEditPress() {
+    setIsDuplicateSuffixEditing(true);
+    requestAnimationFrame(() => duplicateSuffixInputRef.current?.focus());
+  }
+
+  function handleCategorySelect() {
+    Alert.alert(
+      t('category'),
+      undefined,
+      [
+        ...availableCategories.map((option) => ({
+          text: translateCategory(option),
+          onPress: () => {
+            setCategory(option);
+            setValidationMessage('');
+          },
+        })),
+        { text: t('cancel'), style: 'cancel' as const },
+      ],
+      { cancelable: true }
+    );
   }
 
   function handleSave() {
@@ -122,6 +241,16 @@ export default function AddSubscriptionScreen() {
 
     if (!trimmedName) {
       setValidationMessage(t('serviceNameRequired'));
+      return;
+    }
+
+    if (isSelectedServiceDuplicate && !isDuplicateNameOverride) {
+      setValidationMessage(t('duplicateServiceRequiresConfirmation'));
+      return;
+    }
+
+    if (canEditDuplicateName && !duplicateNameSuffix.trim()) {
+      setValidationMessage(t('duplicateServiceSuffixRequired'));
       return;
     }
 
@@ -137,6 +266,11 @@ export default function AddSubscriptionScreen() {
 
     if (!trimmedCategory) {
       setValidationMessage(t('categoryRequired'));
+      return;
+    }
+
+    if (!availableCategories.includes(trimmedCategory)) {
+      setValidationMessage(t('selectCategoryRequired'));
       return;
     }
 
@@ -202,65 +336,131 @@ export default function AddSubscriptionScreen() {
         {serviceMode === 'default' ? (
           <View style={styles.sectionContent}>
             <ThemedText style={styles.fieldLabel}>{t('searchServices')}</ThemedText>
-            <TextInput
-              autoCapitalize="none"
-              autoCorrect={false}
-              onChangeText={setServiceQuery}
-              placeholder={t('searchByNameOrCategory')}
-              placeholderTextColor={textSecondary}
+            <View
               style={[
-                styles.input,
+                styles.searchInputWrapper,
                 {
                   backgroundColor: surface,
                   borderColor,
-                  color: textColor,
                 },
-              ]}
-              value={serviceQuery}
-            />
+              ]}>
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={handleServiceQueryChange}
+                placeholder={t('searchByNameOrCategory')}
+                placeholderTextColor={textSecondary}
+                style={[styles.searchInput, { color: textColor }]}
+                value={serviceQuery}
+              />
+              {serviceQuery ? (
+                <Pressable
+                  accessibilityLabel={t('clearSearch')}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => handleServiceQueryChange('')}
+                  style={({ pressed }) => [
+                    styles.clearSearchButton,
+                    {
+                      backgroundColor: surfaceSecondary,
+                      opacity: pressed ? 0.75 : 1,
+                    },
+                  ]}>
+                  <Ionicons name="close" size={16} color={textSecondary} />
+                </Pressable>
+              ) : null}
+            </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.serviceRow}>
-              {matchingServices.map((service) => {
-                const isActive = selectedService?.key === service.key;
+            {matchingServices.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.serviceRow}>
+                {matchingServices.map((service) => {
+                  const isActive = selectedService?.key === service.key;
 
-                return (
+                  return (
+                    <Pressable
+                      key={service.id}
+                      accessibilityRole="button"
+                      onPress={() => applySelectedService(service)}
+                      style={({ pressed }) => [
+                        styles.serviceCard,
+                        {
+                          backgroundColor: isActive ? tintColor : surfaceSecondary,
+                          borderColor: isActive ? tintColor : borderColor,
+                          opacity: pressed ? 0.9 : 1,
+                        },
+                      ]}>
+                      <ServiceLogo
+                        serviceKey={service.key}
+                        name={service.name}
+                        size={42}
+                        style={styles.serviceBadge}
+                      />
+                      <ThemedText
+                        lightColor={isActive ? '#FFFFFF' : undefined}
+                        darkColor={isActive ? '#FFFFFF' : undefined}
+                        style={styles.serviceName}>
+                        {service.name}
+                      </ThemedText>
+                      <ThemedText
+                        lightColor={isActive ? '#EAF3FF' : undefined}
+                        darkColor={isActive ? '#D9EBFF' : undefined}
+                        style={styles.serviceCategory}>
+                        {translateCategory(service.category)}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            ) : null}
+
+            {isSelectedServiceDuplicate && selectedService ? (
+              <View style={styles.duplicateServiceNotice}>
+                <ThemedText
+                  style={[styles.duplicateServiceNoticeText, { color: textSecondary }]}>
+                  {t('duplicateServiceNotice', { name: selectedService.name })}
+                </ThemedText>
+                {!isDuplicateNameOverride ? (
                   <Pressable
-                    key={service.id}
                     accessibilityRole="button"
-                    onPress={() => applySelectedService(service)}
+                    onPress={applyDuplicateNameOverride}
                     style={({ pressed }) => [
-                      styles.serviceCard,
+                      styles.duplicateAddButton,
                       {
-                        backgroundColor: isActive ? tintColor : surfaceSecondary,
-                        borderColor: isActive ? tintColor : borderColor,
-                        opacity: pressed ? 0.9 : 1,
+                        borderColor: tintColor,
+                        opacity: pressed ? 0.75 : 1,
                       },
                     ]}>
-                    <ServiceLogo
-                      serviceKey={service.key}
-                      name={service.name}
-                      size={42}
-                      style={styles.serviceBadge}
-                    />
-                    <ThemedText
-                      lightColor={isActive ? '#FFFFFF' : undefined}
-                      darkColor={isActive ? '#FFFFFF' : undefined}
-                      style={styles.serviceName}>
-                      {service.name}
-                    </ThemedText>
-                    <ThemedText
-                      lightColor={isActive ? '#EAF3FF' : undefined}
-                      darkColor={isActive ? '#D9EBFF' : undefined}
-                      style={styles.serviceCategory}>
-                      {translateCategory(service.category)}
+                    <ThemedText style={[styles.duplicateAddButtonText, { color: tintColor }]}>
+                      {t('addAnyway')}
                     </ThemedText>
                   </Pressable>
-                );
-              })}
-            </ScrollView>
+                ) : null}
+              </View>
+            ) : null}
+
+            {hasNoServiceMatches ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={applyCustomServiceFromQuery}
+                style={({ pressed }) => [
+                  styles.customServiceAction,
+                  {
+                    backgroundColor: surfaceSecondary,
+                    borderColor,
+                    opacity: pressed ? 0.9 : 1,
+                  },
+                ]}>
+                <ThemedText style={styles.customServiceActionTitle}>
+                  {t('useAsCustomService', { name: trimmedServiceQuery })}
+                </ThemedText>
+                <ThemedText style={[styles.customServiceActionCopy, { color: textSecondary }]}>
+                  {t('customServiceNoMatch')}
+                </ThemedText>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
       </Card>
@@ -271,22 +471,62 @@ export default function AddSubscriptionScreen() {
         <View style={styles.sectionContent}>
           <View style={styles.fieldGroup}>
             <ThemedText style={styles.fieldLabel}>{t('serviceName')}</ThemedText>
-            <TextInput
-              editable={serviceMode === 'custom'}
-              onChangeText={setServiceName}
-              placeholder={t('enterServiceName')}
-              placeholderTextColor={textSecondary}
-              style={[
-                styles.input,
-                styles.fullWidth,
-                {
-                  backgroundColor: serviceMode === 'default' ? surfaceSecondary : surface,
-                  borderColor,
-                  color: textColor,
-                },
-              ]}
-              value={serviceName}
-            />
+            {canEditDuplicateName && selectedService ? (
+              <View
+                style={[
+                  styles.duplicateNameInputWrapper,
+                  {
+                    backgroundColor: surface,
+                    borderColor,
+                  },
+                ]}>
+                <ThemedText style={[styles.duplicateNamePrefix, { color: textColor }]}>
+                  {selectedService.name}-
+                </ThemedText>
+                <TextInput
+                  ref={duplicateSuffixInputRef}
+                  editable={isDuplicateSuffixEditing}
+                  keyboardType="default"
+                  onBlur={() => setIsDuplicateSuffixEditing(false)}
+                  onChangeText={handleDuplicateSuffixChange}
+                  placeholder="2"
+                  placeholderTextColor={textSecondary}
+                  style={[styles.duplicateSuffixInput, { color: textColor }]}
+                  value={duplicateNameSuffix}
+                />
+                <Pressable
+                  accessibilityLabel={t('editDuplicateNameSuffix')}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={handleDuplicateSuffixEditPress}
+                  style={({ pressed }) => [
+                    styles.editServiceNameButton,
+                    {
+                      backgroundColor: surfaceSecondary,
+                      opacity: pressed ? 0.75 : 1,
+                    },
+                  ]}>
+                  <Ionicons name="pencil" size={15} color={textSecondary} />
+                </Pressable>
+              </View>
+            ) : (
+              <TextInput
+                editable={serviceMode === 'custom'}
+                onChangeText={setServiceName}
+                placeholder={t('enterServiceName')}
+                placeholderTextColor={textSecondary}
+                style={[
+                  styles.input,
+                  styles.fullWidth,
+                  {
+                    backgroundColor: serviceMode === 'default' ? surfaceSecondary : surface,
+                    borderColor,
+                    color: textColor,
+                  },
+                ]}
+                value={serviceName}
+              />
+            )}
           </View>
 
           <View style={styles.twoColumnRow}>
@@ -404,26 +644,35 @@ export default function AddSubscriptionScreen() {
 
           <View style={styles.fieldGroup}>
             <ThemedText style={styles.fieldLabel}>{t('category')}</ThemedText>
-            <TextInput
-              onChangeText={setCategory}
-              placeholder={t('enterCategory')}
-              placeholderTextColor={textSecondary}
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleCategorySelect}
               style={[
-                styles.input,
+                styles.selectInput,
                 styles.fullWidth,
                 {
-                  backgroundColor: serviceMode === 'default' ? surfaceSecondary : surface,
+                  backgroundColor: surface,
                   borderColor,
-                  color: textColor,
                 },
-              ]}
-              value={category}
-            />
+              ]}>
+              <ThemedText
+                style={[
+                  styles.selectInputText,
+                  {
+                    color: category ? textColor : textSecondary,
+                  },
+                ]}>
+                {category ? translateCategory(category) : t('selectCategory')}
+              </ThemedText>
+            </Pressable>
           </View>
 
           <View style={styles.fieldGroup}>
             <ThemedText style={styles.fieldLabel}>{t('notes')}</ThemedText>
             <TextInput
+              inputAccessoryViewID={
+                Platform.OS === 'ios' ? NOTES_INPUT_ACCESSORY_ID : undefined
+              }
               multiline
               onChangeText={setNotes}
               placeholder={t('optionalNotes')}
@@ -443,6 +692,33 @@ export default function AddSubscriptionScreen() {
           </View>
         </View>
       </Card>
+
+      {Platform.OS === 'ios' ? (
+        <InputAccessoryView nativeID={NOTES_INPUT_ACCESSORY_ID}>
+          <View
+            style={[
+              styles.keyboardAccessory,
+              {
+                backgroundColor: surface,
+                borderTopColor: borderColor,
+              },
+            ]}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={Keyboard.dismiss}
+              style={({ pressed }) => [
+                styles.keyboardDoneButton,
+                {
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}>
+              <ThemedText style={[styles.keyboardDoneText, { color: tintColor }]}>
+                {t('done')}
+              </ThemedText>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      ) : null}
 
       {validationMessage ? (
         <ThemedText style={[styles.validationText, { color: '#FF3B30' }]}>
@@ -489,6 +765,28 @@ const styles = StyleSheet.create({
   },
   notesInput: {
     minHeight: 112,
+  },
+  searchInputWrapper: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: Spacing.md,
+    paddingRight: Spacing.xs,
+  },
+  searchInput: {
+    flex: 1,
+    minHeight: 52,
+    paddingVertical: Spacing.sm,
+    ...Typography.body,
+  },
+  clearSearchButton: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fullWidth: {
     width: '100%',
@@ -551,6 +849,91 @@ const styles = StyleSheet.create({
   },
   serviceCategory: {
     ...Typography.footnote,
+  },
+  duplicateServiceNotice: {
+    gap: Spacing.xs,
+  },
+  duplicateServiceNoticeText: {
+    ...Typography.footnote,
+    fontStyle: 'italic',
+  },
+  duplicateAddButton: {
+    alignSelf: 'flex-start',
+    minHeight: 32,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  duplicateAddButtonText: {
+    ...Typography.footnote,
+    fontWeight: '600',
+  },
+  duplicateNameInputWrapper: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: Spacing.md,
+    paddingRight: Spacing.xs,
+  },
+  duplicateNamePrefix: {
+    ...Typography.body,
+  },
+  duplicateSuffixInput: {
+    flex: 1,
+    minHeight: 52,
+    minWidth: 48,
+    paddingVertical: Spacing.sm,
+    ...Typography.body,
+  },
+  editServiceNameButton: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customServiceAction: {
+    minHeight: 76,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    justifyContent: 'center',
+    padding: Spacing.md,
+    gap: 2,
+  },
+  customServiceActionTitle: {
+    ...Typography.headline,
+  },
+  customServiceActionCopy: {
+    ...Typography.footnote,
+  },
+  selectInput: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  selectInputText: {
+    ...Typography.body,
+  },
+  keyboardAccessory: {
+    minHeight: 44,
+    borderTopWidth: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
+  },
+  keyboardDoneButton: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  keyboardDoneText: {
+    ...Typography.headline,
   },
   validationText: {
     ...Typography.footnote,

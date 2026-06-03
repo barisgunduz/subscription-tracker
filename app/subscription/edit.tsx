@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Alert,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { Card } from '@/components/Card';
@@ -10,10 +19,13 @@ import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { BILLING_CYCLES, BillingCycle } from '@/types/subscription';
+import { getCategoryTranslationKey } from '@/utils/categories';
 import { getAppCurrency } from '@/utils/currency';
 import { useI18n } from '@/utils/i18n';
+import { listServiceCategories } from '@/utils/serviceLookup';
 
 const BILLING_CYCLE_OPTIONS: BillingCycle[] = [...BILLING_CYCLES];
+const NOTES_INPUT_ACCESSORY_ID = 'edit-subscription-notes-accessory';
 
 function parseNumber(value: string) {
   const normalizedValue = value.replace(',', '.');
@@ -60,6 +72,12 @@ export default function EditSubscriptionScreen() {
   const [category, setCategory] = useState(subscription?.category ?? '');
   const [notes, setNotes] = useState(subscription?.notes ?? '');
   const [validationMessage, setValidationMessage] = useState('');
+  const availableCategories = listServiceCategories();
+  const translateCategory = (value: string) => {
+    const key = getCategoryTranslationKey(value);
+
+    return key ? t(key) : value;
+  };
 
   if (!subscription) {
     return (
@@ -84,6 +102,24 @@ export default function EditSubscriptionScreen() {
       : 'USD'
   );
 
+  function handleCategorySelect() {
+    Alert.alert(
+      t('category'),
+      undefined,
+      [
+        ...availableCategories.map((option) => ({
+          text: translateCategory(option),
+          onPress: () => {
+            setCategory(option);
+            setValidationMessage('');
+          },
+        })),
+        { text: t('cancel'), style: 'cancel' as const },
+      ],
+      { cancelable: true }
+    );
+  }
+
   function handleSave() {
     const parsedPrice = parseNumber(price);
     const normalizedBillingDay = Number(clampBillingDay(billingDay));
@@ -102,6 +138,11 @@ export default function EditSubscriptionScreen() {
 
     if (!trimmedCategory) {
       setValidationMessage(t('categoryRequired'));
+      return;
+    }
+
+    if (!availableCategories.includes(trimmedCategory)) {
+      setValidationMessage(t('selectCategoryRequired'));
       return;
     }
 
@@ -203,26 +244,35 @@ export default function EditSubscriptionScreen() {
 
           <View style={styles.fieldGroup}>
             <ThemedText style={styles.fieldLabel}>{t('category')}</ThemedText>
-            <TextInput
-              onChangeText={setCategory}
-              placeholder={t('enterCategory')}
-              placeholderTextColor={textSecondary}
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleCategorySelect}
               style={[
-                styles.input,
+                styles.selectInput,
                 styles.fullWidth,
                 {
                   backgroundColor: surface,
                   borderColor,
-                  color: textColor,
                 },
-              ]}
-              value={category}
-            />
+              ]}>
+              <ThemedText
+                style={[
+                  styles.selectInputText,
+                  {
+                    color: category ? textColor : textSecondary,
+                  },
+                ]}>
+                {category ? translateCategory(category) : t('selectCategory')}
+              </ThemedText>
+            </Pressable>
           </View>
 
           <View style={styles.fieldGroup}>
             <ThemedText style={styles.fieldLabel}>{t('notes')}</ThemedText>
             <TextInput
+              inputAccessoryViewID={
+                Platform.OS === 'ios' ? NOTES_INPUT_ACCESSORY_ID : undefined
+              }
               multiline
               onChangeText={setNotes}
               placeholder={t('optionalNotes')}
@@ -242,6 +292,33 @@ export default function EditSubscriptionScreen() {
           </View>
         </View>
       </Card>
+
+      {Platform.OS === 'ios' ? (
+        <InputAccessoryView nativeID={NOTES_INPUT_ACCESSORY_ID}>
+          <View
+            style={[
+              styles.keyboardAccessory,
+              {
+                backgroundColor: surface,
+                borderTopColor: borderColor,
+              },
+            ]}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={Keyboard.dismiss}
+              style={({ pressed }) => [
+                styles.keyboardDoneButton,
+                {
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}>
+              <ThemedText style={[styles.keyboardDoneText, { color: tintColor }]}>
+                {t('done')}
+              </ThemedText>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      ) : null}
 
       {validationMessage ? (
         <ThemedText style={[styles.validationText, { color: '#FF3B30' }]}>
@@ -330,6 +407,32 @@ const styles = StyleSheet.create({
   optionChipText: {
     ...Typography.footnote,
     fontWeight: '600',
+  },
+  selectInput: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  selectInputText: {
+    ...Typography.body,
+  },
+  keyboardAccessory: {
+    minHeight: 44,
+    borderTopWidth: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
+  },
+  keyboardDoneButton: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  keyboardDoneText: {
+    ...Typography.headline,
   },
   validationText: {
     ...Typography.footnote,

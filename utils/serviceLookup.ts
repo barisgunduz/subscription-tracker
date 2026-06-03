@@ -18,6 +18,12 @@ export function listAllServices(): Service[] {
   return [...services];
 }
 
+export function listServiceCategories(): string[] {
+  return [...new Set(services.map((service) => service.category))].sort((left, right) =>
+    left.localeCompare(right)
+  );
+}
+
 export function getServiceByKey(key: string): Service | undefined {
   const normalizedKey = normalizeValue(key);
 

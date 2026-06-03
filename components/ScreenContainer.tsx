@@ -1,5 +1,12 @@
 import { PropsWithChildren } from 'react';
-import { ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -27,7 +34,11 @@ export function ScreenContainer({
         style={[styles.safeArea, { backgroundColor }, style]}
         edges={includeTopInset ? undefined : ['left', 'right', 'bottom']}>
         <ScrollView
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
           contentContainerStyle={[styles.content, contentStyle]}
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'none'}
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={Keyboard.dismiss}
           style={styles.fill}
           showsVerticalScrollIndicator={false}>
           {children}
