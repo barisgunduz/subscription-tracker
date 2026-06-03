@@ -53,7 +53,7 @@ const en = {
   dataExportValue: 'JSON, Excel-compatible CSV, or PDF',
   dataStored: 'How Data Is Stored',
   dataStoredBody:
-    'Your subscription data is stored locally on your device. Substrack requests exchange rates from api.frankfurter.dev so it can show totals in your selected display currency. Your saved subscription details are not sent with that request, and if the request fails, the app continues using its built-in default exchange rates.',
+    'Your subscription data is stored locally on your device. Substrack requests exchange rates from api.frankfurter.dev so it can show totals in your selected display currency. Your saved subscription details are not sent with that request. The Frankfurter public API states that it does not collect personal data, but because the service is delivered through Cloudflare, Cloudflare may process basic technical request information such as IP address, timestamp, and request metadata. If the request fails, the app continues using its built-in default exchange rates.',
   dataYouEnter: 'Data You Enter',
   dataYouEnterBody:
     'Subscription names, prices, billing dates, categories, notes, and notification preferences are stored locally on your device. We do not operate a server that receives or stores this subscription data. The only network request used for app functionality is a currency-rate request to api.frankfurter.dev, without your saved subscription details.',
@@ -281,7 +281,7 @@ const tr: TranslationMap = {
   dataExportValue: 'JSON, Excel uyumlu CSV veya PDF',
   dataStored: 'Veriler Nasıl Saklanır',
   dataStoredBody:
-    'Abonelik verilerin cihazında yerel olarak saklanır. Substrack, seçtiğin görüntüleme para biriminde toplamları gösterebilmek için api.frankfurter.dev üzerinden kur bilgisi ister. Kayıtlı abonelik detayların bu istekle gönderilmez; istek başarısız olursa uygulama yerleşik varsayılan kur değerleriyle çalışmaya devam eder.',
+    'Abonelik verilerin cihazında yerel olarak saklanır. Substrack, seçtiğin görüntüleme para biriminde toplamları gösterebilmek için api.frankfurter.dev üzerinden kur bilgisi ister. Kayıtlı abonelik detayların bu istekle gönderilmez. Frankfurter public API kişisel veri toplamadığını belirtir; ancak servis Cloudflare üzerinden sunulduğu için Cloudflare IP adresi, zaman damgası ve istek metadatası gibi temel teknik istek bilgilerini işleyebilir. İstek başarısız olursa uygulama yerleşik varsayılan kur değerleriyle çalışmaya devam eder.',
   dataYouEnter: 'Girdiğin Veriler',
   dataYouEnterBody:
     'Abonelik adları, fiyatlar, fatura tarihleri, kategoriler, notlar ve bildirim tercihleri cihazında yerel olarak saklanır. Bu abonelik verilerini alan veya saklayan bir sunucu işletmiyoruz. Uygulama işlevi için kullanılan tek ağ isteği, kayıtlı abonelik detayların olmadan api.frankfurter.dev adresine yapılan kur isteğidir.',

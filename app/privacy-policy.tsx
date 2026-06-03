@@ -7,11 +7,12 @@ import { Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { TranslationKey, useI18n } from '@/utils/i18n';
 
-const updatedDate = 'May 15, 2026';
+const updatedDate = 'June 3, 2026';
 
 const sections: { titleKey: TranslationKey; bodyKey: TranslationKey }[] = [
   { titleKey: 'overview', bodyKey: 'overviewBody' },
   { titleKey: 'dataYouEnter', bodyKey: 'dataYouEnterBody' },
+  { titleKey: 'dataStored', bodyKey: 'dataStoredBody' },
   { titleKey: 'analytics', bodyKey: 'analyticsBody' },
   { titleKey: 'authenticationAndAds', bodyKey: 'authenticationAndAdsBody' },
   { titleKey: 'notifications', bodyKey: 'notificationsPolicyBody' },

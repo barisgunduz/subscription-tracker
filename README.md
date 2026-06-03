@@ -107,7 +107,7 @@ Stored local data can include:
 - notification preferences
 - language, theme, and display-currency preferences
 
-Substrack uses `api.frankfurter.dev` to refresh exchange rates for currency conversion. Saved subscription details are not sent with that request. If the exchange-rate request fails, the app continues with built-in default exchange rates.
+Substrack uses `api.frankfurter.dev` to refresh exchange rates for currency conversion. Saved subscription details are not sent with that request. Frankfurter's public API states that it does not collect personal data, but the service is delivered through Cloudflare, so Cloudflare may process basic technical request information such as IP address, timestamp, and request metadata. If the exchange-rate request fails, the app continues with built-in default exchange rates.
 
 The app does not currently include analytics, advertising trackers, crash reporting SDKs, or account-based cloud sync.
 

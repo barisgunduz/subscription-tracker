@@ -232,7 +232,3 @@ export async function syncBillingNotificationsAsync(subscriptions: Subscription[
     })
   );
 }
-
-export async function getScheduledBillingNotificationsAsync() {
-  return Notifications.getAllScheduledNotificationsAsync();
-}
