@@ -4,13 +4,17 @@ import * as Sharing from 'expo-sharing';
 
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { Subscription } from '@/types/subscription';
-import { convertCurrency, formatCurrency as formatMoney } from '@/utils/currency';
+import { formatCurrency as formatMoney } from '@/utils/currency';
 import { getLocale, translate, TranslationKey } from '@/utils/i18n';
 
 export type ExportFormat = 'json' | 'csv' | 'pdf';
 
 function getTimestamp() {
   return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
+function getExportFileName(timestamp: string, extension: ExportFormat) {
+  return `substrack-simple-tracker-${timestamp}.${extension}`;
 }
 
 function escapeHtml(value: string) {
@@ -39,17 +43,6 @@ function t(key: TranslationKey, params?: Record<string, string | number>) {
   return translate(getExportLanguage(), key, params);
 }
 
-function formatCurrency(amount: number, currency: string) {
-  const preferences = usePreferencesStore.getState();
-  const displayCurrency = preferences.displayCurrency;
-
-  return formatMoney(
-    convertCurrency(amount, currency, displayCurrency, preferences.exchangeRates),
-    displayCurrency,
-    getExportLocale()
-  );
-}
-
 function buildJsonPayload(subscriptions: Subscription[]) {
   return JSON.stringify(
     {
@@ -63,37 +56,27 @@ function buildJsonPayload(subscriptions: Subscription[]) {
 
 function buildCsvPayload(subscriptions: Subscription[]) {
   const headers = [
-    'ID',
-    'Service Key',
-    t('sortName'),
-    t('price'),
-    'Currency',
-    t('displayValue'),
-    t('billingCycle'),
-    t('billingDay'),
-    t('startDate'),
-    t('renewalDate'),
-    t('nextBillingDate'),
-    t('category'),
-    'Status',
-    t('notes'),
+    'Name',
+    'Price',
+    'Billing Cycle',
+    'Billing Day',
+    'Start Date',
+    'Renewal Date',
+    'Next Billing Date',
+    'Category',
+    'Notes',
   ];
 
   const rows = subscriptions.map((subscription) =>
     [
-      subscription.id,
-      subscription.serviceKey,
       subscription.name,
       formatMoney(subscription.price, subscription.currency, getExportLocale()),
-      subscription.currency,
-      formatCurrency(subscription.price, subscription.currency),
       subscription.billingCycle,
       subscription.billingDay,
       subscription.startDate,
       subscription.renewalDate,
       subscription.nextBillingDate,
       subscription.category,
-      subscription.status,
       subscription.notes,
     ]
       .map(escapeCsv)
@@ -115,11 +98,10 @@ function buildPdfMarkup(subscriptions: Subscription[]) {
         <tr>
           <td>${escapeHtml(subscription.name)}</td>
           <td>${escapeHtml(subscription.category)}</td>
-          <td>${escapeHtml(subscription.status)}</td>
           <td>${escapeHtml(subscription.billingCycle)}</td>
           <td>${escapeHtml(formatMoney(subscription.price, subscription.currency, getExportLocale()))}</td>
-          <td>${escapeHtml(formatCurrency(subscription.price, subscription.currency))}</td>
           <td>${escapeHtml(subscription.nextBillingDate)}</td>
+          <td>${escapeHtml(subscription.notes || '-')}</td>
         </tr>
       `
     )
@@ -171,7 +153,7 @@ function buildPdfMarkup(subscriptions: Subscription[]) {
         </style>
       </head>
       <body>
-        <h1>${escapeHtml(t('exportSubscriptions'))}</h1>
+        <h1>Substrack - Simple Tracker</h1>
         <p>${escapeHtml(t('lastUpdated', { date: exportedAt }))} · ${escapeHtml(t('activeSubscriptionsCount', { count: subscriptions.length }))}</p>
         ${
           subscriptions.length === 0
@@ -182,11 +164,10 @@ function buildPdfMarkup(subscriptions: Subscription[]) {
                   <tr>
                     <th>${escapeHtml(t('sortName'))}</th>
                     <th>${escapeHtml(t('category'))}</th>
-                    <th>Status</th>
                     <th>${escapeHtml(t('billingCycle'))}</th>
                     <th>${escapeHtml(t('price'))}</th>
-                    <th>${escapeHtml(t('displayValue'))}</th>
                     <th>${escapeHtml(t('nextBillingDate'))}</th>
+                    <th>${escapeHtml(t('notes'))}</th>
                   </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -223,22 +204,24 @@ export async function exportSubscriptions(
   }
 
   if (format === 'json') {
-    const uri = `${basePath}subscriptions-${timestamp}.json`;
+    const uri = `${basePath}${getExportFileName(timestamp, 'json')}`;
     await FileSystem.writeAsStringAsync(uri, buildJsonPayload(subscriptions));
     await shareFile(uri, 'application/json', `${t('exportSubscriptions')} JSON`);
     return;
   }
 
   if (format === 'csv') {
-    const uri = `${basePath}subscriptions-${timestamp}.csv`;
+    const uri = `${basePath}${getExportFileName(timestamp, 'csv')}`;
     await FileSystem.writeAsStringAsync(uri, buildCsvPayload(subscriptions));
     await shareFile(uri, 'text/csv', `${t('exportSubscriptions')} CSV`);
     return;
   }
 
-  const { uri } = await Print.printToFileAsync({
+  const printedFile = await Print.printToFileAsync({
     html: buildPdfMarkup(subscriptions),
   });
+  const uri = `${basePath}${getExportFileName(timestamp, 'pdf')}`;
 
+  await FileSystem.copyAsync({ from: printedFile.uri, to: uri });
   await shareFile(uri, 'application/pdf', `${t('exportSubscriptions')} PDF`);
 }
