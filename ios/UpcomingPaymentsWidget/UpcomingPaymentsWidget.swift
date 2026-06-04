@@ -109,13 +109,10 @@ struct UpcomingPaymentsWidgetView: View {
   }
 
   var body: some View {
-    ZStack {
-      backgroundColor
-
-      content
-        .padding(family == .systemSmall ? 14 : 16)
-    }
-    .widgetBackground(backgroundColor)
+    content
+      .padding(family == .systemSmall ? 14 : 16)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+      .widgetBackground(backgroundColor)
   }
 
   @ViewBuilder
@@ -135,10 +132,10 @@ struct UpcomingPaymentsWidgetView: View {
   }
 
   private var smallView: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      widgetHeader(localized("Next Payment"))
+    VStack(alignment: .leading, spacing: 8) {
       Spacer(minLength: 0)
-      paymentBlock(payments[0], titleFont: .headline, compact: false)
+      compactPaymentBlock(payments[0])
+      Spacer(minLength: 0)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
   }
@@ -180,11 +177,10 @@ struct UpcomingPaymentsWidgetView: View {
 
   private func widgetHeader(_ title: String, monthlyTotal: String? = nil) -> some View {
     HStack(alignment: .center, spacing: 8) {
-      Text("S")
-        .font(.caption.weight(.black))
-        .foregroundStyle(Color.white)
+      Image("SubstrackLogo")
+        .resizable()
+        .scaledToFit()
         .frame(width: 24, height: 24)
-        .background(accentColor)
         .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
 
       VStack(alignment: .leading, spacing: 1) {
@@ -268,6 +264,36 @@ struct UpcomingPaymentsWidgetView: View {
         .lineLimit(2)
     }
     .padding(10)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(surfaceColor)
+    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+  }
+
+  private func compactPaymentBlock(_ payment: WidgetPayment) -> some View {
+    VStack(alignment: .leading, spacing: 9) {
+      Text(dueLabel(for: payment.nextBillingDate))
+        .font(.caption.weight(.bold))
+        .foregroundStyle(accentColor)
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .background(accentSoftColor)
+        .clipShape(Capsule())
+
+      Text(payment.name)
+        .font(.headline.weight(.bold))
+        .foregroundStyle(primaryTextColor)
+        .lineLimit(2)
+        .minimumScaleFactor(0.72)
+
+      Text(payment.formattedPrice)
+        .font(.subheadline.weight(.bold))
+        .foregroundStyle(secondaryTextColor)
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
+    }
+    .padding(12)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(surfaceColor)
     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
