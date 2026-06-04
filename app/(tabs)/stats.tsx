@@ -89,8 +89,24 @@ function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getDaysInMonth(year: number, monthIndex: number) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
 function addMonths(date: Date, amount: number) {
-  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+  const targetYear = date.getFullYear();
+  const targetMonth = date.getMonth() + amount;
+  const targetMonthDate = new Date(targetYear, targetMonth, 1);
+  const clampedDay = Math.min(
+    date.getDate(),
+    getDaysInMonth(targetMonthDate.getFullYear(), targetMonthDate.getMonth())
+  );
+
+  return new Date(targetMonthDate.getFullYear(), targetMonthDate.getMonth(), clampedDay);
 }
 
 function isSameMonth(left: Date, right: Date) {
@@ -98,12 +114,13 @@ function isSameMonth(left: Date, right: Date) {
 }
 
 function countRenewalsInPeriod(subscription: Subscription, startDate: Date, months: number) {
-  const endDate = addMonths(startDate, months);
+  const normalizedStartDate = startOfDay(startDate);
+  const endDate = addMonths(normalizedStartDate, months);
   let currentDate = parseIsoDate(subscription.nextBillingDate);
   let count = 0;
 
   while (currentDate < endDate) {
-    if (currentDate >= startDate) {
+    if (currentDate >= normalizedStartDate) {
       count += 1;
     }
 

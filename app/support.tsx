@@ -7,7 +7,7 @@ import { Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { TranslationKey, useI18n } from '@/utils/i18n';
 
-const githubUrl = 'https://github.com/barisgunduz/subscription-tracker';
+const supportUrl = 'https://hub.barisgunduz.com/mobile/substrack';
 const supportEmail = 'baris@gunduzmedya.com';
 
 const sections: { titleKey: TranslationKey; bodyKey: TranslationKey }[] = [
@@ -24,11 +24,11 @@ export default function SupportScreen() {
   const dividerColor = useThemeColor({}, 'divider');
   const { t } = useI18n();
 
-  async function openGithub() {
+  async function openSupportUrl() {
     try {
-      await Linking.openURL(githubUrl);
+      await Linking.openURL(supportUrl);
     } catch {
-      Alert.alert(t('unableOpenLink'), githubUrl);
+      Alert.alert(t('unableOpenLink'), supportUrl);
     }
   }
 
@@ -69,9 +69,9 @@ export default function SupportScreen() {
         <View style={[styles.links, { borderTopColor: dividerColor }]}>
           <Pressable
             accessibilityRole="link"
-            onPress={() => void openGithub()}
+            onPress={() => void openSupportUrl()}
             style={({ pressed }) => [styles.linkButton, { opacity: pressed ? 0.72 : 1 }]}>
-            <ThemedText style={[styles.linkText, { color: tintColor }]}>{githubUrl}</ThemedText>
+            <ThemedText style={[styles.linkText, { color: tintColor }]}>{supportUrl}</ThemedText>
           </Pressable>
 
           <Pressable
@@ -79,7 +79,7 @@ export default function SupportScreen() {
             onPress={() => void openEmail()}
             style={({ pressed }) => [styles.linkButton, { opacity: pressed ? 0.72 : 1 }]}>
             <ThemedText style={[styles.linkText, { color: tintColor }]}>
-              mailto:{supportEmail}
+              Contact Us via Mail
             </ThemedText>
           </Pressable>
         </View>
