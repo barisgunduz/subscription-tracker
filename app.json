@@ -40,12 +40,13 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Substrack-Logo.png",
-          "imageWidth": 200,
+          "image": "./assets/images/Substrack-Splash.png",
+          "imageWidth": 430,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#F8F3EA",
           "dark": {
-            "backgroundColor": "#000000"
+            "image": "./assets/images/Substrack-Splash.png",
+            "backgroundColor": "#F8F3EA"
           }
         }
       ],

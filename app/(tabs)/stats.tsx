@@ -465,7 +465,9 @@ export default function StatsScreen() {
                 key={item.id}
                 style={[
                   styles.subscriptionRow,
-                  index < topSubscriptions.length - 1 ? { borderBottomColor: dividerColor } : null,
+                  index < topSubscriptions.length - 1
+                    ? { borderBottomColor: dividerColor, borderBottomWidth: 1 }
+                    : null,
                 ]}>
                 <View style={styles.subscriptionInfo}>
                   <View style={[styles.categoryBadge, { backgroundColor: surfaceSecondary }]}>
@@ -612,7 +614,6 @@ const styles = StyleSheet.create({
   subscriptionRow: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
