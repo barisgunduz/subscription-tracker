@@ -698,5 +698,551 @@
     "name": "Telegram Premium",
     "category": "Productivity",
     "logo": "telegram"
+  },
+  {
+    "id": 101,
+    "key": "gitlab",
+    "name": "GitLab",
+    "category": "Software",
+    "logo": "gitlab"
+  },
+  {
+    "id": 102,
+    "key": "bitbucket",
+    "name": "Bitbucket",
+    "category": "Software",
+    "logo": "bitbucket"
+  },
+  {
+    "id": 103,
+    "key": "jira",
+    "name": "Jira",
+    "category": "Productivity",
+    "logo": "jira"
+  },
+  {
+    "id": 104,
+    "key": "confluence",
+    "name": "Confluence",
+    "category": "Productivity",
+    "logo": "confluence"
+  },
+  {
+    "id": 105,
+    "key": "linear",
+    "name": "Linear",
+    "category": "Productivity",
+    "logo": "linear"
+  },
+  {
+    "id": 106,
+    "key": "coda",
+    "name": "Coda",
+    "category": "Productivity",
+    "logo": "coda"
+  },
+  {
+    "id": 107,
+    "key": "airtable",
+    "name": "Airtable",
+    "category": "Productivity",
+    "logo": "airtable"
+  },
+  {
+    "id": 108,
+    "key": "monday_com",
+    "name": "Monday.com",
+    "category": "Productivity",
+    "logo": "monday_com"
+  },
+  {
+    "id": 109,
+    "key": "asana",
+    "name": "Asana",
+    "category": "Productivity",
+    "logo": "asana"
+  },
+  {
+    "id": 110,
+    "key": "clickup",
+    "name": "ClickUp",
+    "category": "Productivity",
+    "logo": "clickup"
+  },
+  {
+    "id": 111,
+    "key": "trello",
+    "name": "Trello",
+    "category": "Productivity",
+    "logo": "trello"
+  },
+  {
+    "id": 112,
+    "key": "basecamp",
+    "name": "Basecamp",
+    "category": "Productivity",
+    "logo": "basecamp"
+  },
+  {
+    "id": 113,
+    "key": "microsoft_teams",
+    "name": "Microsoft Teams",
+    "category": "Productivity",
+    "logo": "microsoft_teams"
+  },
+  {
+    "id": 114,
+    "key": "loom",
+    "name": "Loom",
+    "category": "Software",
+    "logo": "loom"
+  },
+  {
+    "id": 115,
+    "key": "sketch",
+    "name": "Sketch",
+    "category": "Software",
+    "logo": "sketch"
+  },
+  {
+    "id": 116,
+    "key": "adobe_xd",
+    "name": "Adobe XD",
+    "category": "Software",
+    "logo": "adobe_xd"
+  },
+  {
+    "id": 117,
+    "key": "invision",
+    "name": "InVision",
+    "category": "Software",
+    "logo": "invision"
+  },
+  {
+    "id": 118,
+    "key": "zeplin",
+    "name": "Zeplin",
+    "category": "Software",
+    "logo": "zeplin"
+  },
+  {
+    "id": 119,
+    "key": "framer",
+    "name": "Framer",
+    "category": "Software",
+    "logo": "framer"
+  },
+  {
+    "id": 120,
+    "key": "bubble",
+    "name": "Bubble",
+    "category": "Software",
+    "logo": "bubble"
+  },
+  {
+    "id": 121,
+    "key": "vercel",
+    "name": "Vercel",
+    "category": "Software",
+    "logo": "vercel"
+  },
+  {
+    "id": 122,
+    "key": "netlify",
+    "name": "Netlify",
+    "category": "Software",
+    "logo": "netlify"
+  },
+  {
+    "id": 123,
+    "key": "railway",
+    "name": "Railway",
+    "category": "Software",
+    "logo": "railway"
+  },
+  {
+    "id": 124,
+    "key": "heroku",
+    "name": "Heroku",
+    "category": "Software",
+    "logo": "heroku"
+  },
+  {
+    "id": 125,
+    "key": "aws",
+    "name": "AWS",
+    "category": "Software",
+    "logo": "aws"
+  },
+  {
+    "id": 126,
+    "key": "google_cloud",
+    "name": "Google Cloud",
+    "category": "Software",
+    "logo": "google_cloud"
+  },
+  {
+    "id": 127,
+    "key": "microsoft_azure",
+    "name": "Microsoft Azure",
+    "category": "Software",
+    "logo": "microsoft_azure"
+  },
+  {
+    "id": 128,
+    "key": "digitalocean",
+    "name": "DigitalOcean",
+    "category": "Software",
+    "logo": "digitalocean"
+  },
+  {
+    "id": 129,
+    "key": "cloudflare",
+    "name": "Cloudflare",
+    "category": "Software",
+    "logo": "cloudflare"
+  },
+  {
+    "id": 130,
+    "key": "supabase",
+    "name": "Supabase",
+    "category": "Software",
+    "logo": "supabase"
+  },
+  {
+    "id": 131,
+    "key": "planetscale",
+    "name": "PlanetScale",
+    "category": "Software",
+    "logo": "planetscale"
+  },
+  {
+    "id": 132,
+    "key": "neon",
+    "name": "Neon",
+    "category": "Software",
+    "logo": "neon"
+  },
+  {
+    "id": 133,
+    "key": "mongodb_atlas",
+    "name": "MongoDB Atlas",
+    "category": "Software",
+    "logo": "mongodb_atlas"
+  },
+  {
+    "id": 134,
+    "key": "firebase",
+    "name": "Firebase",
+    "category": "Software",
+    "logo": "firebase"
+  },
+  {
+    "id": 135,
+    "key": "datadog",
+    "name": "Datadog",
+    "category": "Software",
+    "logo": "datadog"
+  },
+  {
+    "id": 136,
+    "key": "sentry",
+    "name": "Sentry",
+    "category": "Software",
+    "logo": "sentry"
+  },
+  {
+    "id": 137,
+    "key": "logrocket",
+    "name": "LogRocket",
+    "category": "Software",
+    "logo": "logrocket"
+  },
+  {
+    "id": 138,
+    "key": "postman",
+    "name": "Postman",
+    "category": "Software",
+    "logo": "postman"
+  },
+  {
+    "id": 139,
+    "key": "insomnia",
+    "name": "Insomnia",
+    "category": "Software",
+    "logo": "insomnia"
+  },
+  {
+    "id": 140,
+    "key": "tableplus",
+    "name": "TablePlus",
+    "category": "Software",
+    "logo": "tableplus"
+  },
+  {
+    "id": 141,
+    "key": "datagrip",
+    "name": "DataGrip",
+    "category": "Software",
+    "logo": "datagrip"
+  },
+  {
+    "id": 142,
+    "key": "jetbrains",
+    "name": "JetBrains",
+    "category": "Software",
+    "logo": "jetbrains"
+  },
+  {
+    "id": 143,
+    "key": "cursor",
+    "name": "Cursor",
+    "category": "Software",
+    "logo": "cursor"
+  },
+  {
+    "id": 144,
+    "key": "warp",
+    "name": "Warp",
+    "category": "Software",
+    "logo": "warp"
+  },
+  {
+    "id": 145,
+    "key": "gemini_advanced",
+    "name": "Gemini Advanced",
+    "category": "AI Tools",
+    "logo": "gemini_advanced"
+  },
+  {
+    "id": 146,
+    "key": "copilot_pro",
+    "name": "Copilot Pro",
+    "category": "AI Tools",
+    "logo": "copilot_pro"
+  },
+  {
+    "id": 147,
+    "key": "poe",
+    "name": "Poe",
+    "category": "AI Tools",
+    "logo": "poe"
+  },
+  {
+    "id": 148,
+    "key": "you_com",
+    "name": "You.com",
+    "category": "AI Tools",
+    "logo": "you_com"
+  },
+  {
+    "id": 149,
+    "key": "mistral",
+    "name": "Mistral",
+    "category": "AI Tools",
+    "logo": "mistral"
+  },
+  {
+    "id": 150,
+    "key": "cohere",
+    "name": "Cohere",
+    "category": "AI Tools",
+    "logo": "cohere"
+  },
+  {
+    "id": 151,
+    "key": "leonardo_ai",
+    "name": "Leonardo AI",
+    "category": "AI Tools",
+    "logo": "leonardo_ai"
+  },
+  {
+    "id": 152,
+    "key": "ideogram",
+    "name": "Ideogram",
+    "category": "AI Tools",
+    "logo": "ideogram"
+  },
+  {
+    "id": 153,
+    "key": "pika_labs",
+    "name": "Pika Labs",
+    "category": "AI Tools",
+    "logo": "pika_labs"
+  },
+  {
+    "id": 154,
+    "key": "elevenlabs",
+    "name": "ElevenLabs",
+    "category": "AI Tools",
+    "logo": "elevenlabs"
+  },
+  {
+    "id": 155,
+    "key": "murf",
+    "name": "Murf",
+    "category": "AI Tools",
+    "logo": "murf"
+  },
+  {
+    "id": 156,
+    "key": "descript",
+    "name": "Descript",
+    "category": "AI Tools",
+    "logo": "descript"
+  },
+  {
+    "id": 157,
+    "key": "kling_ai",
+    "name": "Kling AI",
+    "category": "AI Tools",
+    "logo": "kling_ai"
+  },
+  {
+    "id": 158,
+    "key": "sora",
+    "name": "Sora",
+    "category": "AI Tools",
+    "logo": "sora"
+  },
+  {
+    "id": 159,
+    "key": "synthesia",
+    "name": "Synthesia",
+    "category": "AI Tools",
+    "logo": "synthesia"
+  },
+  {
+    "id": 160,
+    "key": "jasper",
+    "name": "Jasper",
+    "category": "AI Tools",
+    "logo": "jasper"
+  },
+  {
+    "id": 161,
+    "key": "copy_ai",
+    "name": "Copy.ai",
+    "category": "AI Tools",
+    "logo": "copy_ai"
+  },
+  {
+    "id": 162,
+    "key": "writesonic",
+    "name": "Writesonic",
+    "category": "AI Tools",
+    "logo": "writesonic"
+  },
+  {
+    "id": 163,
+    "key": "surfer_seo",
+    "name": "Surfer SEO",
+    "category": "Marketing",
+    "logo": "surfer_seo"
+  },
+  {
+    "id": 164,
+    "key": "screaming_frog",
+    "name": "Screaming Frog",
+    "category": "Marketing",
+    "logo": "screaming_frog"
+  },
+  {
+    "id": 165,
+    "key": "hubspot",
+    "name": "HubSpot",
+    "category": "Business",
+    "logo": "hubspot"
+  },
+  {
+    "id": 166,
+    "key": "salesforce",
+    "name": "Salesforce",
+    "category": "Business",
+    "logo": "salesforce"
+  },
+  {
+    "id": 167,
+    "key": "pipedrive",
+    "name": "Pipedrive",
+    "category": "Business",
+    "logo": "pipedrive"
+  },
+  {
+    "id": 168,
+    "key": "zoho",
+    "name": "Zoho",
+    "category": "Business",
+    "logo": "zoho"
+  },
+  {
+    "id": 169,
+    "key": "intercom",
+    "name": "Intercom",
+    "category": "Business",
+    "logo": "intercom"
+  },
+  {
+    "id": 170,
+    "key": "zendesk",
+    "name": "Zendesk",
+    "category": "Business",
+    "logo": "zendesk"
+  },
+  {
+    "id": 171,
+    "key": "freshdesk",
+    "name": "Freshdesk",
+    "category": "Business",
+    "logo": "freshdesk"
+  },
+  {
+    "id": 172,
+    "key": "mailchimp",
+    "name": "Mailchimp",
+    "category": "Marketing",
+    "logo": "mailchimp"
+  },
+  {
+    "id": 173,
+    "key": "convertkit",
+    "name": "ConvertKit",
+    "category": "Marketing",
+    "logo": "convertkit"
+  },
+  {
+    "id": 174,
+    "key": "activecampaign",
+    "name": "ActiveCampaign",
+    "category": "Marketing",
+    "logo": "activecampaign"
+  },
+  {
+    "id": 175,
+    "key": "beehiiv",
+    "name": "Beehiiv",
+    "category": "Marketing",
+    "logo": "beehiiv"
+  },
+  {
+    "id": 176,
+    "key": "sprout_social",
+    "name": "Sprout Social",
+    "category": "Marketing",
+    "logo": "sprout_social"
+  },
+  {
+    "id": 177,
+    "key": "shutterstock",
+    "name": "Shutterstock",
+    "category": "Software",
+    "logo": "shutterstock"
+  },
+  {
+    "id": 178,
+    "key": "notion_ai",
+    "name": "Notion AI",
+    "category": "AI Tools",
+    "logo": "notion_ai"
   }
 ]
