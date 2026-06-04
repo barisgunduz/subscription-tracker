@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { I18nManager } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 
 import { CurrencyRateSync } from '@/components/CurrencyRateSync';
@@ -19,6 +20,13 @@ import { useI18n } from '@/utils/i18n';
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+const minimumSplashDurationMs = 2000;
+const splashStartedAt = Date.now();
+
+void SplashScreen.preventAutoHideAsync().catch(() => {
+  // Splash can already be hidden during fast refresh or unsupported runtimes.
+});
 
 export default function RootLayout() {
   const router = useRouter();
@@ -52,6 +60,21 @@ export default function RootLayout() {
   const subscriptionsBackButton = () => (
     <HeaderBackButton label={t('back')} onPress={handleSubscriptionsBack} tintColor={tintColor} />
   );
+
+  useEffect(() => {
+    const remainingSplashTime = Math.max(
+      minimumSplashDurationMs - (Date.now() - splashStartedAt),
+      0
+    );
+
+    const timeout = setTimeout(() => {
+      void SplashScreen.hideAsync().catch(() => {});
+    }, remainingSplashTime);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
 
   useEffect(() => {
     const selectedLanguage = getAppLanguage(languageCode);
