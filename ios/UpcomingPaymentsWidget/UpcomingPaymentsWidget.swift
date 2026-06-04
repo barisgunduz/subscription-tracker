@@ -61,7 +61,6 @@ struct UpcomingPaymentsProvider: TimelineProvider {
 
 struct UpcomingPaymentsWidgetView: View {
   @Environment(\.widgetFamily) private var family
-  @Environment(\.colorScheme) private var colorScheme
   let entry: UpcomingPaymentsEntry
 
   private var languageCode: String {
@@ -72,52 +71,63 @@ struct UpcomingPaymentsWidgetView: View {
     entry.payload?.payments ?? []
   }
 
-  private var backgroundColor: Color {
-    colorScheme == .dark
-      ? Color(red: 0.08, green: 0.07, blue: 0.06)
-      : Color(red: 0.98, green: 0.96, blue: 0.93)
+  private var backgroundStartColor: Color {
+    Color(red: 0.08, green: 0.09, blue: 0.08)
+  }
+
+  private var backgroundEndColor: Color {
+    Color(red: 0.12, green: 0.15, blue: 0.13)
   }
 
   private var surfaceColor: Color {
-    colorScheme == .dark
-      ? Color(red: 0.15, green: 0.13, blue: 0.11)
-      : Color(red: 1.0, green: 0.99, blue: 0.96)
+    Color.white.opacity(0.11)
+  }
+
+  private var strongSurfaceColor: Color {
+    Color.white.opacity(0.16)
   }
 
   private var primaryTextColor: Color {
-    colorScheme == .dark
-      ? Color(red: 0.98, green: 0.95, blue: 0.92)
-      : Color(red: 0.13, green: 0.11, blue: 0.09)
+    Color(red: 0.98, green: 0.97, blue: 0.94)
   }
 
   private var secondaryTextColor: Color {
-    colorScheme == .dark
-      ? Color(red: 0.75, green: 0.70, blue: 0.65)
-      : Color(red: 0.45, green: 0.41, blue: 0.38)
+    Color(red: 0.78, green: 0.80, blue: 0.76)
   }
 
   private var accentColor: Color {
-    colorScheme == .dark
-      ? Color(red: 0.55, green: 0.72, blue: 0.65)
-      : Color(red: 0.31, green: 0.48, blue: 0.42)
+    Color(red: 0.73, green: 0.91, blue: 0.80)
   }
 
   private var accentSoftColor: Color {
-    colorScheme == .dark
-      ? Color(red: 0.14, green: 0.22, blue: 0.19)
-      : Color(red: 0.86, green: 0.93, blue: 0.89)
+    Color(red: 0.18, green: 0.31, blue: 0.25)
   }
 
   private var outerPadding: CGFloat {
-    family == .systemSmall ? 8 : 9
+    family == .systemSmall ? 10 : 11
   }
 
   var body: some View {
-    content
-      .padding(outerPadding)
+    ZStack(alignment: .topLeading) {
+      widgetBackgroundView
+
+      content
+        .padding(outerPadding)
+    }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-      .widgetBackground(backgroundColor)
+      .widgetBackground {
+        widgetBackgroundView
+      }
+      .stableWidgetRendering()
       .unredacted()
+  }
+
+  private var widgetBackgroundView: some View {
+    LinearGradient(
+      colors: [backgroundStartColor, backgroundEndColor],
+      startPoint: .topLeading,
+      endPoint: .bottomTrailing
+    )
   }
 
   @ViewBuilder
@@ -146,8 +156,8 @@ struct UpcomingPaymentsWidgetView: View {
   }
 
   private var mediumView: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      widgetHeader(localized("Next 3 Payments"))
+    VStack(alignment: .leading, spacing: 7) {
+      widgetHeader()
       ForEach(Array(payments.prefix(3))) { payment in
         mediumPaymentRow(payment)
       }
@@ -157,11 +167,11 @@ struct UpcomingPaymentsWidgetView: View {
   }
 
   private var largeView: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      widgetHeader(localized("Upcoming 5 Payments"), monthlyTotal: entry.payload?.monthlyTotal)
+    VStack(alignment: .leading, spacing: 9) {
+      widgetHeader(monthlyTotal: entry.payload?.monthlyTotal)
 
       ForEach(Array(payments.prefix(5))) { payment in
-        paymentRow(payment)
+        largePaymentRow(payment)
       }
 
       Spacer(minLength: 0)
@@ -172,7 +182,7 @@ struct UpcomingPaymentsWidgetView: View {
   private var emptyState: some View {
     VStack(alignment: .leading, spacing: family == .systemSmall ? 10 : 12) {
       if family != .systemSmall {
-        widgetHeader(localized("Upcoming Payments"))
+        widgetHeader()
       }
 
       VStack(alignment: .leading, spacing: 6) {
@@ -190,7 +200,7 @@ struct UpcomingPaymentsWidgetView: View {
       }
       .padding(12)
       .frame(maxWidth: .infinity, alignment: .leading)
-      .background(surfaceColor)
+      .background(strongSurfaceColor)
       .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
       Spacer(minLength: 0)
@@ -198,7 +208,7 @@ struct UpcomingPaymentsWidgetView: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
   }
 
-  private func widgetHeader(_ title: String, monthlyTotal: String? = nil) -> some View {
+  private func widgetHeader(monthlyTotal: String? = nil) -> some View {
     HStack(alignment: .center, spacing: 8) {
       Image("SubstrackLogo")
         .resizable()
@@ -210,7 +220,7 @@ struct UpcomingPaymentsWidgetView: View {
         Text("Substrack")
           .font(.caption2.weight(.bold))
           .foregroundStyle(primaryTextColor)
-        Text(title)
+        Text("Simple Tracker")
           .font(.caption2.weight(.semibold))
           .foregroundStyle(secondaryTextColor)
           .lineLimit(1)
@@ -233,7 +243,7 @@ struct UpcomingPaymentsWidgetView: View {
     }
   }
 
-  private func paymentRow(_ payment: WidgetPayment) -> some View {
+  private func largePaymentRow(_ payment: WidgetPayment) -> some View {
     HStack(alignment: .center, spacing: 8) {
       Text(dueLabel(for: payment.nextBillingDate))
         .font(.caption2.weight(.bold))
@@ -244,10 +254,10 @@ struct UpcomingPaymentsWidgetView: View {
         .padding(.vertical, 4)
         .background(accentSoftColor)
         .clipShape(Capsule())
-        .frame(width: family == .systemLarge ? 72 : 64, alignment: .leading)
+        .frame(width: 72, alignment: .leading)
 
       Text(payment.name)
-        .font(.subheadline.weight(.semibold))
+        .font(.caption.weight(.semibold))
         .foregroundStyle(primaryTextColor)
         .lineLimit(1)
         .minimumScaleFactor(0.8)
@@ -261,7 +271,7 @@ struct UpcomingPaymentsWidgetView: View {
         .minimumScaleFactor(0.8)
     }
     .padding(.horizontal, 9)
-    .padding(.vertical, family == .systemLarge ? 8 : 6)
+    .padding(.vertical, 7)
     .background(surfaceColor)
     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
   }
@@ -350,9 +360,9 @@ struct UpcomingPaymentsWidgetView: View {
         .lineLimit(1)
         .minimumScaleFactor(0.75)
     }
-    .padding(12)
+    .padding(11)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(surfaceColor)
+    .background(strongSurfaceColor)
     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
   }
 
@@ -423,6 +433,7 @@ struct UpcomingPaymentsWidget: Widget {
     .configurationDisplayName("Substrack")
     .description("See your upcoming subscription payments.")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    .contentMarginsDisabled()
   }
 }
 
@@ -454,11 +465,24 @@ extension WidgetPayload {
 
 private extension View {
   @ViewBuilder
-  func widgetBackground(_ color: Color) -> some View {
-    if #available(iOSApplicationExtension 17.0, *) {
-      self.containerBackground(color, for: .widget)
+  func stableWidgetRendering() -> some View {
+    if #available(iOS 16.0, *) {
+      self.widgetAccentable(false)
     } else {
-      self.background(color)
+      self
+    }
+  }
+
+  @ViewBuilder
+  func widgetBackground<Background: View>(
+    @ViewBuilder _ background: () -> Background
+  ) -> some View {
+    if #available(iOS 17.0, *) {
+      self.containerBackground(for: .widget) {
+        background()
+      }
+    } else {
+      self.background(background())
     }
   }
 }
