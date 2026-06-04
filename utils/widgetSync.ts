@@ -28,9 +28,12 @@ type WidgetPayload = {
 
 type NativeWidgetModule = {
   saveWidgetData?: (payload: string) => Promise<void>;
+  getWidgetData?: () => Promise<string | null>;
 };
 
-const widgetModule = NativeModules.SubstrackWidget as NativeWidgetModule | undefined;
+function getWidgetModule() {
+  return NativeModules.SubstrackWidget as NativeWidgetModule | undefined;
+}
 
 function getNormalizedMonthlyPrice(
   subscription: Subscription,
@@ -55,7 +58,9 @@ function buildWidgetPayload(): WidgetPayload {
   const subscriptions = useSubscriptionStore.getState().subscriptions;
   const { displayCurrency, exchangeRates, languageCode } = usePreferencesStore.getState();
   const locale = getWidgetLocale(languageCode);
-  const activeSubscriptions = subscriptions.filter((subscription) => subscription.status === 'active');
+  const activeSubscriptions = subscriptions.filter(
+    (subscription) => subscription.status !== 'paused' && subscription.status !== 'cancelled'
+  );
   const monthlyTotal = activeSubscriptions.reduce(
     (total, subscription) =>
       total + getNormalizedMonthlyPrice(subscription, displayCurrency, exchangeRates),
@@ -95,9 +100,21 @@ function buildWidgetPayload(): WidgetPayload {
 }
 
 export async function syncUpcomingPaymentsWidgetAsync() {
+  const widgetModule = getWidgetModule();
+
   if (Platform.OS !== 'ios' || !widgetModule?.saveWidgetData) {
     return;
   }
 
-  await widgetModule.saveWidgetData(JSON.stringify(buildWidgetPayload()));
+  const payload = JSON.stringify(buildWidgetPayload());
+
+  await widgetModule.saveWidgetData(payload);
+
+  if (widgetModule.getWidgetData) {
+    const savedPayload = await widgetModule.getWidgetData();
+
+    if (savedPayload !== payload) {
+      throw new Error('Widget data verification failed.');
+    }
+  }
 }

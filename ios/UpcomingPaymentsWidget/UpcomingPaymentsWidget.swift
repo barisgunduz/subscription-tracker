@@ -36,7 +36,7 @@ struct UpcomingPaymentsProvider: TimelineProvider {
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<UpcomingPaymentsEntry>) -> Void) {
     let now = Date()
-    let entry = UpcomingPaymentsEntry(date: now, payload: loadPayload())
+    let entry = UpcomingPaymentsEntry(date: now, payload: loadPayload() ?? WidgetPayload.empty)
     let nextRefresh = Calendar.current.nextDate(
       after: now,
       matching: DateComponents(hour: 0, minute: 5),
@@ -113,6 +113,7 @@ struct UpcomingPaymentsWidgetView: View {
       .padding(family == .systemSmall ? 14 : 16)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
       .widgetBackground(backgroundColor)
+      .unredacted()
   }
 
   @ViewBuilder
@@ -165,11 +166,29 @@ struct UpcomingPaymentsWidgetView: View {
   }
 
   private var emptyState: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      widgetHeader(localized("Upcoming Payments"))
-      Text(localized("No upcoming payments"))
-        .font(.subheadline.weight(.semibold))
-        .foregroundStyle(primaryTextColor)
+    VStack(alignment: .leading, spacing: family == .systemSmall ? 10 : 12) {
+      if family != .systemSmall {
+        widgetHeader(localized("Upcoming Payments"))
+      }
+
+      VStack(alignment: .leading, spacing: 6) {
+        Text(localized("No subscriptions yet"))
+          .font((family == .systemSmall ? Font.headline : Font.subheadline).weight(.semibold))
+          .foregroundStyle(primaryTextColor)
+          .lineLimit(2)
+          .minimumScaleFactor(0.8)
+
+        Text(localized("Add one in Substrack"))
+          .font(.caption.weight(.medium))
+          .foregroundStyle(secondaryTextColor)
+          .lineLimit(2)
+          .minimumScaleFactor(0.75)
+      }
+      .padding(12)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(surfaceColor)
+      .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
       Spacer(minLength: 0)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -341,8 +360,10 @@ struct UpcomingPaymentsWidgetView: View {
       return "Yaklaşan 5 Ödeme"
     case "Monthly total":
       return "Aylık toplam"
-    case "No upcoming payments":
-      return "Yaklaşan ödeme yok"
+    case "No subscriptions yet":
+      return "Henüz abonelik yok"
+    case "Add one in Substrack":
+      return "Substrack içinde ekleyin"
     case "Today":
       return "Bugün"
     case "Tomorrow":
@@ -368,6 +389,15 @@ struct UpcomingPaymentsWidget: Widget {
 }
 
 extension WidgetPayload {
+  static let empty = WidgetPayload(
+    version: 1,
+    generatedAt: "1970-01-01T00:00:00Z",
+    languageCode: "en",
+    locale: "en-US",
+    monthlyTotal: "$0.00",
+    payments: []
+  )
+
   static let sample = WidgetPayload(
     version: 1,
     generatedAt: "2026-06-01T00:00:00Z",

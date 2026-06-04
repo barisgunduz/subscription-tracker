@@ -32,4 +32,17 @@ class SubstrackWidget: NSObject {
 
     resolve(nil)
   }
+
+  @objc(getWidgetData:rejecter:)
+  func getWidgetData(
+    resolver resolve: RCTPromiseResolveBlock,
+    rejecter reject: RCTPromiseRejectBlock
+  ) {
+    guard let defaults = UserDefaults(suiteName: appGroupIdentifier) else {
+      reject("ERR_WIDGET_APP_GROUP", "Unable to open widget app group storage.", nil)
+      return
+    }
+
+    resolve(defaults.string(forKey: widgetDataKey))
+  }
 }
