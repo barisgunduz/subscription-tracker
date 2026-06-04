@@ -28,6 +28,7 @@ class SubstrackWidget: NSObject {
 
     if #available(iOS 14.0, *) {
       WidgetCenter.shared.reloadTimelines(ofKind: "UpcomingPaymentsWidget")
+      WidgetCenter.shared.reloadAllTimelines()
     }
 
     resolve(nil)

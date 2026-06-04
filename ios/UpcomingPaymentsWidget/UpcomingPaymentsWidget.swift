@@ -108,9 +108,13 @@ struct UpcomingPaymentsWidgetView: View {
       : Color(red: 0.86, green: 0.93, blue: 0.89)
   }
 
+  private var outerPadding: CGFloat {
+    family == .systemSmall ? 8 : 9
+  }
+
   var body: some View {
     content
-      .padding(family == .systemSmall ? 14 : 16)
+      .padding(outerPadding)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
       .widgetBackground(backgroundColor)
       .unredacted()
@@ -142,10 +146,10 @@ struct UpcomingPaymentsWidgetView: View {
   }
 
   private var mediumView: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: 6) {
       widgetHeader(localized("Next 3 Payments"))
       ForEach(Array(payments.prefix(3))) { payment in
-        paymentRow(payment)
+        mediumPaymentRow(payment)
       }
       Spacer(minLength: 0)
     }
@@ -260,6 +264,40 @@ struct UpcomingPaymentsWidgetView: View {
     .padding(.vertical, family == .systemLarge ? 8 : 6)
     .background(surfaceColor)
     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+  }
+
+  private func mediumPaymentRow(_ payment: WidgetPayment) -> some View {
+    HStack(alignment: .center, spacing: 7) {
+      Text(dueLabel(for: payment.nextBillingDate))
+        .font(.caption2.weight(.bold))
+        .foregroundStyle(accentColor)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(accentSoftColor)
+        .clipShape(Capsule())
+        .frame(width: 58, alignment: .leading)
+
+      Text(payment.name)
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(primaryTextColor)
+        .lineLimit(1)
+        .minimumScaleFactor(0.72)
+
+      Spacer(minLength: 2)
+
+      Text(payment.formattedPrice)
+        .font(.caption2.weight(.bold))
+        .foregroundStyle(primaryTextColor)
+        .lineLimit(1)
+        .minimumScaleFactor(0.72)
+    }
+    .padding(.horizontal, 7)
+    .padding(.vertical, 5)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(surfaceColor)
+    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
   }
 
   private func paymentBlock(_ payment: WidgetPayment, titleFont: Font, compact: Bool) -> some View {
